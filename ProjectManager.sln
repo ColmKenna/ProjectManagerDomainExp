@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimativeExtensions", "Prim
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectManagerTests", "ProjectManagerTests\ProjectManagerTests.csproj", "{2E41CCE4-785B-443E-9284-777C80148B2B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Measurements", "Measurements\Measurements.csproj", "{D4CAC6CE-327F-4C99-9088-E2936655C74F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{2E41CCE4-785B-443E-9284-777C80148B2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E41CCE4-785B-443E-9284-777C80148B2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E41CCE4-785B-443E-9284-777C80148B2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4CAC6CE-327F-4C99-9088-E2936655C74F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4CAC6CE-327F-4C99-9088-E2936655C74F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4CAC6CE-327F-4C99-9088-E2936655C74F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4CAC6CE-327F-4C99-9088-E2936655C74F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2E41CCE4-785B-443E-9284-777C80148B2B} = {AC4AB07F-8804-4409-AAEC-1BF6B3FD3EE2}

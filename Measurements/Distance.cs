@@ -1,4 +1,4 @@
-namespace ProjectManager.Measurements;
+namespace Measurements;
 
 public struct Distance : IEqualityComparer<Distance>
 {

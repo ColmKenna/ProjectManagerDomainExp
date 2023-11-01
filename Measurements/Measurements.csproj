@@ -10,8 +10,4 @@
       <ProjectReference Include="..\PrimativeExtensions\PrimativeExtensions.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Measurements\" />
-    </ItemGroup>
-
 </Project>
