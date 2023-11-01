@@ -1,3 +1,5 @@
+using Measurements;
+
 namespace ProjectManager;
 
 public class Project
@@ -18,4 +20,9 @@ public class Project
     public string Name { get; private set; }
     public string Description { get; private set; }
     public List<ProjectTask> Tasks { get; private set; } = new List<ProjectTask>();
+
+    public void AddTask(string task, string details)
+    {
+        Tasks.Add(ProjectTask.Create(task, details));
+    }
 }

@@ -23,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Measurements\Measurements.csproj" />
       <ProjectReference Include="..\PrimativeExtensions\PrimativeExtensions.csproj" />
       <ProjectReference Include="..\ProjectManager\ProjectManager.csproj" />
     </ItemGroup>

@@ -7,11 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Measurements\Measurements.csproj" />
       <ProjectReference Include="..\PrimativeExtensions\PrimativeExtensions.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Measurements\" />
     </ItemGroup>
 
 </Project>

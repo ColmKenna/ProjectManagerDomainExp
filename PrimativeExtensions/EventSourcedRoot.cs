@@ -1,7 +1,7 @@
 namespace PrimativeExtensions;
 
-public abstract class AggregateRoot<T> 
-    where T : AggregateRoot<T> 
+public abstract class EventSourcedRoot<T> 
+    where T : EventSourcedRoot<T> 
 {
     protected readonly List<IDomainEvent<T>> _domainEvents = new();
     public virtual IReadOnlyList<IDomainEvent<T>> DomainEvents => _domainEvents.AsReadOnly();
