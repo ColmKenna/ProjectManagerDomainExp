@@ -21,6 +21,7 @@ public class Validation<T>
     }
 
     public bool IsFailure => !IsValid;
+    
 
     private Validation(T value, bool isValid, string errorMessage)
     {
@@ -72,6 +73,16 @@ public class Validation<T>
         }
 
         func(this.Value);
+    }
+    
+    public Validation<U> Map<U>(Func<T, U> func)
+    {
+        if (IsFailure)
+        {
+            return Validation<U>.Fail(ErrorMessage);
+        }
+
+        return Validation<U>.Success(func(this.Value));
     }
     public IEnumerable<TR> MapAsEnumerable<TR>(Func<T, IEnumerable<TR>> func){
         if (IsFailure)
