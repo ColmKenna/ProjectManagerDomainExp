@@ -10,7 +10,7 @@ public abstract class EventSourcedRoot<T>
     {
         
         _domainEvents.Add(domainEvent);
-        return handleEvent(domainEvent);
+        return HandleEvent(domainEvent);
     }
 
     public IEnumerable<TR> GetEvents<TR>() where TR : IDomainEvent<T>
@@ -44,7 +44,7 @@ public abstract class EventSourcedRoot<T>
         return root;
     }
 
-    protected abstract Validation<T> handleEvent(IDomainEvent<T> domainEvent);
+    protected abstract Validation<T> HandleEvent(IDomainEvent<T> domainEvent);
 
     public abstract T GetNewState();
 
