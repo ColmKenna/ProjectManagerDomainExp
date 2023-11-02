@@ -93,6 +93,10 @@ public class RecourceRequired
     public IList<ResourceAssigned> ResourcesAssigned { get; private set; } = new List<ResourceAssigned>();
     public int Quantity { get; private set; }
 
+    public int TotalAssignedQty => ResourcesAssigned.Sum(r => r.Quantity);
+
+    public int QuantityRequiredRemaining => Quantity - TotalAssignedQty;
+
     public static RecourceRequired Create(string resourceName, string resourceDescription, int resourceQuantity)
     {
         return new RecourceRequired
