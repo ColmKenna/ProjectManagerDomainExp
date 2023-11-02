@@ -221,6 +221,118 @@ public class ProjectCreationTests
         Assert.Equal($"{taskName3} is already a dependency of {taskName}.", result6.ErrorMessage);
     }
     
+    
+    [Fact]
+    public void TaskCanHaveAStartPointSet()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
 
+        Project project = Project.Create(name, description);
+        var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
+        var result2 = project.SetTaskStartPoint(result1.Value, Duration.Days(3));
+
+        Assert.True(result2.IsValid);
+        result2.ActionOnSuccess(t =>
+        {
+            Assert.Equal(Duration.Days(3), t.InitialStartPoint );
+        });
+    }
+    
+    
+    // Task should have a property to say earliest possible start date that is based on the dependencies
+    [Fact]
+    public void TaskShouldHaveAPropertyToSayEarliestPossibleStartDateThatIsBasedOnTheDependencies()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
+        var result2 = project.AddTask(taskName2, "This is a test task", Duration.Days(10));
+        var result3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
+
+        var result4 = project.AddDependency(result2.Value, result1.Value);
+        var result5 = project.AddDependency(result3.Value, result2.Value);
+
+        var earliestStart = result3.Value.GetEarliestStartPointBasedOnDependancies();
+        Assert.Equal(Duration.Days(20), earliestStart);
+
+    }
+    
+    // Task should have a property to say latest possible start date that is based on the dependencies
+    [Fact]
+    public void TaskShouldHaveAPropertyToSayLatestPossibleStartDateThatIsBasedOnTheDependencies()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        var result1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
+        var result2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
+        var result3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
+
+        var result4 = project.AddDependency(result2.Value, result1.Value);
+        var result5 = project.AddDependency(result3.Value, result2.Value);
+
+        var latestStart = result3.Value.GetLatestStartPointBasedOnDependancies();
+        Assert.Equal(Duration.Days(25), latestStart);
+    }
+    
+    [Fact]
+    public void TaskShouldHaveAPropertyToGiveApproximateStartdateThatIsBasedOnTheDependencies()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
+        var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
+        var task3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
+
+        project.AddDependency(task2.Value, task1.Value);
+        project.AddDependency(task3.Value, task2.Value);
+
+        var latestStart = task3.Value.GetApproximateStartRangeBasedOnDependancies();
+        Assert.Equal(DurationApproximate.From(Duration.Days(20), Duration.Days(25)), latestStart);
+    }
+    
+    // Get a list of tasks that have an approximate Start that is after the initial start date
+    [Fact]
+    public void GetAListOfTasksThatHaveAnApproximateStartThatIsAfterTheInitialStartDate()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
+        var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
+        var task3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
+        project.AddDependency(task2.Value, task1.Value);
+        project.AddDependency(task3.Value, task2.Value);
+
+        // Assert should retrieve task 2 and task 3
+        var tasks = project.GetTasksThatHaveAnApproximateStartThatIsAfterTheInitialStartDate().ToList();
+        Assert.Equal(2, tasks.Count());
+        Assert.Contains(task2.Value, tasks);
+        Assert.Contains(task3.Value, tasks);
+    }
+    
+    
+    
+    //TODO: Prevent DurationApproximate from having a minimum greater than the maximum?
     //TODO: Subtasks?
 }

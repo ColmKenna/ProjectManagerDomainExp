@@ -34,7 +34,7 @@ public class Project
         return projectTask;
     }
 
-    // Method to add a required resource to a task
+
     public Validation<ProjectTask> AddResourceToTask(string taskName, RecourceRequired resource)
     {
         // Check that the task exists
@@ -86,4 +86,25 @@ public class Project
         return task.AddDependency(projectTask);
     }
 
+    
+    public Validation<ProjectTask> SetTaskStartPoint(ProjectTask task, DurationApproximate approximateStartPoint)
+    {
+        return task.SetStartPoint(approximateStartPoint);
+    }
+
+
+    public IEnumerable<ProjectTask> GetTasksThatHaveAnApproximateStartThatIsAfterTheInitialStartDate()
+    {
+        foreach (var projectTask in Tasks)
+        {
+            var earliestStartPoint = projectTask.GetEarliestStartPointBasedOnDependancies().ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units ;
+            var earliestinitialStartPoint = projectTask.InitialStartPoint.Minimum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
+            var latestinitialStartPoint = projectTask.InitialStartPoint.Maximum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units ;
+            if( earliestinitialStartPoint < earliestStartPoint || earliestStartPoint < latestinitialStartPoint)
+            {
+                yield return projectTask;
+            }
+        }
+        
+    }
 }

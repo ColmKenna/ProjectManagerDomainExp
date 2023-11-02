@@ -10,6 +10,7 @@ public class ProjectTask
         Name = name;
         Description = description;
         DurationApproximate = durationApproximate;
+        InitialStartPoint = DurationApproximate.From(Duration.Days(0));
     }
 
     public static ProjectTask Create(string name, string description, DurationApproximate durationApproximate)
@@ -82,6 +83,62 @@ public class ProjectTask
         Dependencies = Dependencies.Append(projectTask).ToList();
         return this;
 
+    }
+
+    public Validation<ProjectTask> SetStartPoint(Duration start)
+    {
+         return this.SetStartPoint(DurationApproximate.From(start));
+    }
+
+    public Validation<ProjectTask> SetStartPoint(DurationApproximate approximateStartPoint)
+    {
+        this.InitialStartPoint = approximateStartPoint;
+        return this;
+    }
+
+    public DurationApproximate InitialStartPoint { get; private set; }
+
+    public Duration GetEarliestStartPointBasedOnDependancies()
+    {
+        var currentEarliestStartPoint = Duration.Days(0);
+        foreach (var dependency in Dependencies)
+        {
+            var dependencyEarliestStartPoint = dependency.GetEarliestStartPointBasedOnDependancies();
+            var dependencyDuration = dependency.DurationApproximate.Minimum;
+            var dependencyEndPoint = dependencyEarliestStartPoint + dependencyDuration;
+            var currentOfDays =  currentEarliestStartPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
+            var dependencyOfDays = dependencyEndPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
+            if (dependencyOfDays > currentOfDays)
+            {
+                currentEarliestStartPoint = dependencyEndPoint;
+            } 
+        }
+        return currentEarliestStartPoint;
+    }
+     
+    public Duration GetLatestStartPointBasedOnDependancies()
+    {
+        var currentLatestStartPoint = Duration.Days(0);
+        foreach (var dependency in Dependencies)
+        {
+            var dependencyLatestStartPoint = dependency.GetLatestStartPointBasedOnDependancies();
+            var dependencyDuration = dependency.DurationApproximate.Maximum;
+            var dependencyEndPoint = dependencyLatestStartPoint + dependencyDuration;
+            var currentOfDays =  currentLatestStartPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
+            var dependencyOfDays = dependencyEndPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
+            if (dependencyOfDays > currentOfDays)
+            {
+                currentLatestStartPoint = dependencyEndPoint;
+            } 
+        }
+        return currentLatestStartPoint;
+    }
+
+    public DurationApproximate GetApproximateStartRangeBasedOnDependancies()
+    {
+        var earliestStartPoint = GetEarliestStartPointBasedOnDependancies();
+        var latestStartPoint = GetLatestStartPointBasedOnDependancies();
+        return DurationApproximate.From(earliestStartPoint, latestStartPoint); 
     }
 }
 

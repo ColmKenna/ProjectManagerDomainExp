@@ -73,7 +73,6 @@ public struct DurationApproximate
     }
     
 
-    // create an explicit conversion operator from Duration to TaskDurationApproximate
     public static implicit operator DurationApproximate(Duration duration) => new(duration);
 
     public override bool Equals(object? obj)
@@ -83,5 +82,19 @@ public struct DurationApproximate
             return durationApproximate.Minimum == Minimum && durationApproximate.Maximum == Maximum;
         }
         return base.Equals(obj);
+    }
+
+    public static bool operator ==(DurationApproximate left, DurationApproximate right)
+    {
+        if (ReferenceEquals(left, null))
+        {
+            return ReferenceEquals(right, null);
+        }
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(DurationApproximate left, DurationApproximate right)
+    {
+        return !(left == right);
     }
 }
