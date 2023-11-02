@@ -1,18 +1,20 @@
-﻿using PrimativeExtensions;
+﻿using Measurements;
+using PrimativeExtensions;
 
 namespace ProjectManager;
 
 public class ProjectTask
 {
-    private ProjectTask(string name, string description)
+    private ProjectTask(string name, string description, DurationApproximate durationApproximate)
     {
         Name = name;
         Description = description;
+        DurationApproximate = durationApproximate;
     }
 
-    public static ProjectTask Create(string name, string description)
+    public static ProjectTask Create(string name, string description, DurationApproximate durationApproximate)
     {
-        return new ProjectTask(name, description);
+        return new ProjectTask(name, description, durationApproximate);
     }
 
     public int Id { get; private set; }
@@ -30,6 +32,9 @@ public class ProjectTask
                 .ToList();
         }
     }
+
+    public DurationApproximate DurationApproximate { get; set; }
+    public IReadOnlyCollection<ProjectTask> Dependencies { get; private set; } = new List<ProjectTask>();
 
     public Validation<RecourceRequired> AddResourcesRequired(RecourceRequired resource)
     {
@@ -60,6 +65,23 @@ public class ProjectTask
         // Add the resource to the resource required
         var addResult =  resourceRequired.AddResourceAssigned(resourceAssigned);
         return addResult.Map(x => this); 
+    }
+
+    public Validation<ProjectTask> AddDependency(ProjectTask projectTask)
+    {
+        if(projectTask == this)
+        {
+            return Validation<ProjectTask>.Fail($"A task cannot be dependent on itself.");
+        }
+        IEnumerable<ProjectTask> dependancies = PrimativeExtensions.BreadthFirstMethods.BreadthFirst(projectTask, x => x.Dependencies).Skip(1);
+        if (dependancies.Any(d => d == this))
+        {
+            return Validation<ProjectTask>.Fail($"{projectTask.Name} is already a dependency of {this.Name}.");
+        }
+        
+        Dependencies = Dependencies.Append(projectTask).ToList();
+        return this;
+
     }
 }
 

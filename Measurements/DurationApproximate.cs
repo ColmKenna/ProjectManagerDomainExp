@@ -59,6 +59,7 @@ public struct DurationApproximate
     public static DurationApproximate From(Duration minimum, Duration maximum) =>
         new DurationApproximate(minimum, maximum);
 
+    
 
     public static DurationApproximate operator +(DurationApproximate a, DurationApproximate b)
     {
@@ -73,7 +74,7 @@ public struct DurationApproximate
     
 
     // create an explicit conversion operator from Duration to TaskDurationApproximate
-    public static explicit operator DurationApproximate(Duration duration) => new(duration);
+    public static implicit operator DurationApproximate(Duration duration) => new(duration);
 
     public override bool Equals(object? obj)
     {

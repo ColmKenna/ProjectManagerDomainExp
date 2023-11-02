@@ -1,10 +1,10 @@
+using Measurements;
 using ProjectManager;
 
 namespace ProjectManagerTests;
 
-public class ResourceAssignmentTests{
-
-// Test for adding a resource to a task
+public class ResourceAssignmentTests
+{
     [Fact]
     public void CanAddResourceToTask()
     {
@@ -18,7 +18,7 @@ public class ResourceAssignmentTests{
         
         // Call the Project.Create() method
         Project project = Project.Create(name, description);
-        project.AddTask(taskName, taskDescription);
+        project.AddTask(taskName, taskDescription,Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var result = project.AddResourceToTask(taskName, resource);
 
@@ -70,7 +70,7 @@ public class ResourceAssignmentTests{
         
         // Call the Project.Create() method
         Project project = Project.Create(name, description);
-        project.AddTask(taskName, taskDescription);
+        project.AddTask(taskName, taskDescription,Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var result1 = project.AddResourceToTask(taskName, resource);
         var result2 = project.AddResourceToTask(taskName, resource);
@@ -106,7 +106,7 @@ public class ResourceAssignmentTests{
 
         // Call the Project.Create() method
         Project project = Project.Create(name, description);
-        project.AddTask(taskName, taskDescription);
+        project.AddTask(taskName, taskDescription,Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var resourceAssigned = ResourceAssigned.Create(resourceAssignedName, resourceAssignedDescription, resourceAssignedQuantity);
         var result1 = project.AddResourceToTask(taskName, resource);
@@ -167,7 +167,7 @@ public class ResourceAssignmentTests{
 
         // Call the Project.Create() method
         Project project = Project.Create(name, description);
-        project.AddTask(taskName, taskDescription);
+        project.AddTask(taskName, taskDescription,Duration.Days(10));
         var resourceAssigned = ResourceAssigned.Create(resourceAssignedName, resourceAssignedDescription, resourceAssignedQuantity);
         var result = project.AssignResourceToResourceRequired(taskName, resourceName, resourceAssigned);
 
