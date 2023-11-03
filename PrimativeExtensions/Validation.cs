@@ -84,6 +84,17 @@ public class Validation<T>
 
         return Validation<U>.Success(func(this.Value));
     }
+    
+    public Validation<U> Map<U>(Func<T, Validation<U>> func)
+    {
+        if (IsFailure)
+        {
+            return Validation<U>.Fail(ErrorMessage);
+        }
+        return func(this.Value);
+    }
+
+    
     public IEnumerable<TR> MapAsEnumerable<TR>(Func<T, IEnumerable<TR>> func){
         if (IsFailure)
         {

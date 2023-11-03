@@ -107,4 +107,14 @@ public class Project
         }
         
     }
+
+    public Validation<ProjectTask> AddTaskAfter(ProjectTask precedingTask, Duration days, string newTaskName, string newTaskDescription, DurationApproximate from)
+    {
+        var task2 = AddTask(newTaskName, newTaskDescription, from);
+        return task2.Map(x =>
+        {
+            var approximateStartDate  = precedingTask.GetApproximateEndRangeBasedOnDependancies() + days;
+            return x.SetStartPoint(approximateStartDate);
+        });
+    }
 }

@@ -307,6 +307,39 @@ public class ProjectCreationTests
         Assert.Equal(DurationApproximate.From(Duration.Days(20), Duration.Days(25)), latestStart);
     }
     
+    [Fact]
+    public void StartDateShouldAlsoTakeIntoAccountTheStartDateOfTheProject()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
+        var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
+        project.AddDependency(task2.Value, task1.Value);
+        task2 =  task2.Map(x => x.SetStartPoint(Duration.Days(12)));
+
+        var approximateStartDates = task2.Map(x => x.GetApproximateStartRangeBasedOnDependancies());
+        var approximateEndDates = task2.Map(x => x.GetApproximateEndRangeBasedOnDependancies());
+
+        approximateStartDates.ActionOnSuccess(x =>
+        {
+            Assert.Equal(12, x.Minimum.Units);
+            Assert.Equal(13, x.Maximum.Units);
+        });
+        
+        approximateEndDates.ActionOnSuccess(x =>
+        {
+            Assert.Equal(22, x.Minimum.Units);
+            Assert.Equal(25, x.Maximum.Units);
+        });
+        
+    }
+    
+    
     // Get a list of tasks that have an approximate Start that is after the initial start date
     [Fact]
     public void GetAListOfTasksThatHaveAnApproximateStartThatIsAfterTheInitialStartDate()
@@ -332,7 +365,57 @@ public class ProjectCreationTests
     }
     
     
+    // Function to add a task and set it to start after another task but not be dependent on it
+    [Fact]
+    public void FunctionToAddATaskAndSetItToStartAfterAnotherTaskButNotBeDependentOnIt()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName = "Test Task";
+        string taskName2 = "Test Task 2";
+        string taskName3 = "Test Task 3";
+
+        Project project = Project.Create(name, description);
+        Validation<ProjectTask> task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
+        Validation<ProjectTask> task2 = project.AddTaskAfter(task1.Value, Duration.Days(1),  taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
+        Validation<ProjectTask> task3 = project.AddTaskAfter(task2.Value, Duration.Days(2), taskName3, "This is a test task", Duration.Days(10));
+
+        
+        Assert.True(task1.IsValid);
+        Assert.True(task2.IsValid);
+        Assert.True(task3.IsValid);
+        
+        task2.Match(task1,
+            (t2, t1) =>
+            {
+                var t1EndApproximate = t1.GetApproximateEndRangeBasedOnDependancies().GetDateApproximate(new DateTime(2023,1,1) );
+                var t2Start = t2.GetApproximateStartRangeBasedOnDependancies().GetDateApproximate(new DateTime(2023,1,1) );
+                Assert.Equal(t1EndApproximate.Earliest.AddDays(1), t2Start.Earliest);
+                Assert.Equal(t1EndApproximate.Latest.AddDays(1), t2Start.Latest);
+                Assert.DoesNotContain(t2, t1.Dependencies);
+            },
+            (f1) => Assert.True(false, f1.ErrorMessage),
+            (f2) => Assert.True(false, f2.ErrorMessage ));
+        
+        task3.Match(task2,
+            (t3, t2) =>
+            {
+                var t2EndApproximate = t2.GetApproximateEndRangeBasedOnDependancies().GetDateApproximate(new DateTime(2023,1,1) );
+                var t3Start = t3.GetApproximateStartRangeBasedOnDependancies().GetDateApproximate(new DateTime(2023,1,1) );
+                Assert.Equal(t2EndApproximate.Earliest.AddDays(2), t3Start.Earliest);
+                Assert.Equal(t2EndApproximate.Latest.AddDays(2), t3Start.Latest);
+                Assert.DoesNotContain(t3, t2.Dependencies);
+            },
+            (f1) => Assert.True(false, f1.ErrorMessage),
+            (f2) => Assert.True(false, f2.ErrorMessage ));
+            
+        }
+    
+    
+        
+        
+
+    }
     
     //TODO: Prevent DurationApproximate from having a minimum greater than the maximum?
     //TODO: Subtasks?
-}

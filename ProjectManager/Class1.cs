@@ -100,7 +100,7 @@ public class ProjectTask
 
     public Duration GetEarliestStartPointBasedOnDependancies()
     {
-        var currentEarliestStartPoint = Duration.Days(0);
+        var currentEarliestStartPoint = Duration.Days(0); 
         foreach (var dependency in Dependencies)
         {
             var dependencyEarliestStartPoint = dependency.GetEarliestStartPointBasedOnDependancies();
@@ -112,6 +112,11 @@ public class ProjectTask
             {
                 currentEarliestStartPoint = dependencyEndPoint;
             } 
+        }
+
+        if (this.InitialStartPoint.Minimum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units > currentEarliestStartPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units)
+        {
+            currentEarliestStartPoint = this.InitialStartPoint.Minimum;
         }
         return currentEarliestStartPoint;
     }
@@ -131,6 +136,11 @@ public class ProjectTask
                 currentLatestStartPoint = dependencyEndPoint;
             } 
         }
+        if (this.InitialStartPoint.Maximum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units > currentLatestStartPoint.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units)
+        {
+            currentLatestStartPoint = this.InitialStartPoint.Maximum;
+        }
+
         return currentLatestStartPoint;
     }
 
@@ -140,6 +150,17 @@ public class ProjectTask
         var latestStartPoint = GetLatestStartPointBasedOnDependancies();
         return DurationApproximate.From(earliestStartPoint, latestStartPoint); 
     }
+    
+    
+    public DurationApproximate GetApproximateEndRangeBasedOnDependancies()
+    {
+        var earliestStartPoint = GetEarliestStartPointBasedOnDependancies();
+        var latestStartPoint = GetLatestStartPointBasedOnDependancies();
+        var earliestEndPoint = earliestStartPoint +  DurationApproximate.Minimum;
+        var latestEndPoint =  latestStartPoint + DurationApproximate.Maximum;
+        return DurationApproximate.From(earliestEndPoint, latestEndPoint); 
+    }
+    
 }
 
 public class RecourceRequired
