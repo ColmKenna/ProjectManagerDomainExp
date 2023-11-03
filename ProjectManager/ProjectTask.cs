@@ -1,4 +1,4 @@
-﻿using Measurements;
+using Measurements;
 using PrimativeExtensions;
 
 namespace ProjectManager;
@@ -87,7 +87,7 @@ public class ProjectTask
 
     public Validation<ProjectTask> SetStartPoint(Duration start)
     {
-         return this.SetStartPoint(DurationApproximate.From(start));
+        return this.SetStartPoint(DurationApproximate.From(start));
     }
 
     public Validation<ProjectTask> SetStartPoint(DurationApproximate approximateStartPoint)
@@ -161,58 +161,4 @@ public class ProjectTask
         return DurationApproximate.From(earliestEndPoint, latestEndPoint); 
     }
     
-}
-
-public class RecourceRequired
-{
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-    public IList<ResourceAssigned> ResourcesAssigned { get; private set; } = new List<ResourceAssigned>();
-    public int Quantity { get; private set; }
-
-    public int TotalAssignedQty => ResourcesAssigned.Sum(r => r.Quantity);
-
-    public int QuantityRequiredRemaining => Quantity - TotalAssignedQty;
-
-    public static RecourceRequired Create(string resourceName, string resourceDescription, int resourceQuantity)
-    {
-        return new RecourceRequired
-        {
-            Name = resourceName,
-            Description = resourceDescription,
-            Quantity = resourceQuantity
-        }; 
-    }
-
-    public Validation<ResourceAssigned> AddResourceAssigned(ResourceAssigned resourceAssigned)
-    {
-        if (ResourcesAssigned.Any(r => r.Name.Equals(resourceAssigned.Name, StringComparison.OrdinalIgnoreCase)))
-        {
-            return Validation<ResourceAssigned>.Fail($"The resource '{resourceAssigned.Name}' is already assigned to this resource required.");
-        }
-        var resourcesAssigned = ResourcesAssigned.ToList();
-        resourcesAssigned.Add(resourceAssigned);
-        ResourcesAssigned = resourcesAssigned;
-        return resourceAssigned;
-    }
-}
-
-public class ResourceAssigned
-{
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-    public int Quantity { get; private set; }
-
-    public static ResourceAssigned Create(string resourceAssignedName, string resourceAssignedDescription, int resourceAssignedQuantity)
-    {
-        return new ResourceAssigned
-        {
-            Name = resourceAssignedName,
-            Description = resourceAssignedDescription,
-            Quantity = resourceAssignedQuantity
-        };
-
-    }
 }
