@@ -97,6 +97,9 @@ public struct Duration
         return durations;
     }
 
+    
+    public bool IsEmpty() => Units == 0 && OtherDurations.All(x => x.IsEmpty());
+
     public Duration AddDuration (Duration duration)
     {
 
@@ -236,9 +239,14 @@ public struct Duration
     }
 
 
-    public Duration ConvertTo(TimeUnit valueTime, DateTime? date)
+    public Duration ConvertTo(TimeUnit valueTime, DateTime? date = null)
     {
-        return DurationConversionService.ConvertToTimeUnit(this.Units, this.Time, valueTime, date);
+        var durations = OtherDurations.Sum(x => x.ConvertTo(valueTime, date).Units);
+        
+        var current = DurationConversionService.ConvertToTimeUnit(this.Units, this.Time, valueTime, date);
+        current.Units += durations;
+        return current;
+        
     }
 }
 
