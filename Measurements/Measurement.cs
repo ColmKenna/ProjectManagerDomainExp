@@ -29,19 +29,33 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
         {
             if (obj is MeasurementType other)
             {
+                var current = this;
                 return other.Match<bool>(
-                    distance => this.IsType1() && this.Type1 == distance,
-                    weight => this.IsType2() && this.Type2 == weight,
-                    duration => this.IsType3() && this.Type3 == duration,
-                    volume => this.IsType4() && this.Type4 == volume,
-                    area => this.IsType5() && this.Type5 == area,
-                    qty => this.IsType6() && this.Type6 == qty
+                    distance => current.IsDistanceUnit  && distance == current.Type1,
+                    weight => current.IsWeightUnit && weight == current.Type2,
+                    duration => current.IsTimeUnit  && duration == current.Type3,
+                    volume => current.IsVolumeUnit  && volume == current.Type4,
+                    area => current.IsAreaUnit  && area == current.Type5, 
+                    qty => current.IsType6() 
                 );
             }
 
             return false;
         }
-        
+
+ 
+        public override int GetHashCode()
+        {
+               return Match<int>(
+                 distance => distance.GetHashCode(),
+                 weight => weight.GetHashCode(),
+                 duration => duration.GetHashCode(),
+                 volume => volume.GetHashCode(),
+                 area => area.GetHashCode(),
+                 qty => qty.GetHashCode()
+                );
+        }
+
         public static bool operator ==(MeasurementType left, MeasurementType right)
         {
             if (ReferenceEquals(left, null))
@@ -119,10 +133,25 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             duration => new MeasurementType(duration.Time),
             volume => new MeasurementType(volume.VolumeType),
             area => new MeasurementType(area.AreaType),
-            qty => new MeasurementType(qty)
+            qty => new MeasurementType(1)
         );
         
     }
+
+
+
+    public IEnumerable<Measurement> GetSubMeasurements()
+    {
+        return Match<IEnumerable<Measurement>>(
+            distance => distance.OtherDistances.Select(x => (Measurement)x)  ,
+            weight => weight.OtherWeights.Select(x => (Measurement)x)  ,
+            duration => duration.OtherDurations.Select(x => (Measurement)x)  ,
+            volume => volume.OtherVolumes.Select(x => (Measurement)x)  ,
+            area => area.OtherAreas.Select(x => (Measurement)x)  ,
+            qty => new List<Measurement>()
+        );
+    }
+    
     public decimal GetQty()
     {
         return Match(
@@ -137,7 +166,8 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
 
     public Measurement Map(Func<decimal, decimal> func)
     {
-        return Match<Measurement>(
+        var subMeasurements = GetSubMeasurements().Select(x => x.Map(func));
+        var current = Match<Measurement>(
             distance => new Distance(distance.DistanceType, func(distance.Amount)),
             weight => new Weight(weight.WeightType, func(weight.Amount)),
             duration => new Duration(duration.Time, func(duration.Units.ToDecimal()).ToInt()),
@@ -145,6 +175,7 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             area => new Area(area.AreaType, func(area.Amount)),
             qty => func(qty).ToInt()
         );
+        return subMeasurements.Aggregate(current, (current1, subMeasurement) => current1 + subMeasurement);
     }
 
     public Validation<Measurement> GetAs(MeasurementType unitT, DateTime? date = null)
@@ -157,13 +188,47 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
         return Match<Measurement>(
             distance => distance.ConvertTo(((Maybe<DistanceUnit>)unitT).Value),
             weight => weight.ConvertTo(((Maybe<WeightUnit>)unitT).Value),
-            duration => duration.ConvertTo(((Maybe<TimeUnit>)unitT).Value, date),
+            duration =>
+            {
+                if (date == null && duration.Time.ContainedIn(TimeUnit.Quarters, TimeUnit.Months, TimeUnit.Years ))
+                {
+                    throw new Exception("Date must be provided when converting a duration to a different time unit.");
+                }
+
+                var otherDurations  = duration.OtherDurations.ToList() ;
+                if (otherDurations.Any(x => x.Time == TimeUnit.Hours))
+                {
+                    return duration.ConvertTo(TimeUnit.Hours, date);
+                }
+                if (otherDurations.Any(x => x.Time == TimeUnit.Days))
+                {
+                    return duration.ConvertTo(TimeUnit.Days, date);
+                }
+                if (otherDurations.Any(x => x.Time == TimeUnit.Weeks))
+                {
+                    return duration.ConvertTo(TimeUnit.Weeks, date);
+                }
+                if (otherDurations.Any(x => x.Time == TimeUnit.Months))
+                {
+                    return duration.ConvertTo(TimeUnit.Months, date);
+                }
+                if (otherDurations.Any(x => x.Time == TimeUnit.Quarters))
+                {
+                    return duration.ConvertTo(TimeUnit.Quarters, date);
+                }
+                if (otherDurations.Any(x => x.Time == TimeUnit.Years))
+                {
+                    return duration.ConvertTo(TimeUnit.Years, date);
+                }
+                
+                return duration.ConvertTo(((Maybe<TimeUnit>)unitT).Value, date);
+            },
             volume => volume.ConvertTo(((Maybe<VolumeUnit>)unitT).Value),
             area => area.ConvertTo(((Maybe<AreaUnit>)unitT).Value),
             qty => qty
         );
     }
-    
+        
     public static implicit operator Measurement(Distance value) => new Measurement(value);
     public static implicit operator Measurement(Weight value) => new Measurement(value);
     public static implicit operator Measurement(Duration value) => new Measurement(value);
@@ -220,7 +285,7 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             duration => new Duration(duration, Qty.ToInt()),
             volume => new Volume(volume, Qty),
             area => new Area(area, Qty),
-            qty => new Measurement(qty)
+            qty => new Measurement(Qty.ToInt())
         );
     }
 
@@ -243,18 +308,34 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
     {
         return Equals((Measurement)this, (Measurement)obj);
     }
-    
+
+
+    public bool ShallowEquals(Measurement other)
+    {
+        return ShallowEquals(this, other);
+    }
+    private static bool ShallowEquals(Measurement x, Measurement y)
+    {
+        return x.Match(
+            distance => distance.DistanceType == y.DistanceValue.Value.DistanceType && distance.Amount == y.DistanceValue.Value.Amount,
+            weight => weight.WeightType == y.WeightValue.Value.WeightType && weight.Amount == y.WeightValue.Value.Amount,
+            duration => duration.Time == y.DurationValue.Value.Time && duration.Units == y.DurationValue.Value.Units,
+            volume => volume.VolumeType == y.VolumeValue.Value.VolumeType && volume.Amount == y.VolumeValue.Value.Amount,
+            area => area.AreaType == y.AreaValue.Value.AreaType && area.Amount == y.AreaValue.Value.Amount,
+            qty => qty.Equals(y.IntValue.Value)
+        );
+    }
 
     public bool Equals(Measurement x, Measurement y)
     {
-        return x.Match<bool>(
-            distance => distance.Equals(y.DistanceValue.Value),
-            weight => weight.Equals(y.WeightValue.Value),
-            duration => duration.Equals(y.DurationValue.Value),
-            volume => volume.Equals(y.VolumeValue.Value),
-            area => area.Equals(y.AreaValue.Value),
-            qty => qty.Equals(y.IntValue.Value)
-        ); 
+        var allMeasurementsOnLeft = BreadthFirstMethods.BreadthFirst(x, x => x.GetSubMeasurements() ).ToList();
+        var allMeasurementsOnRight = BreadthFirstMethods.BreadthFirst(y, y => y.GetSubMeasurements() ).ToList();
+        if (allMeasurementsOnLeft.Count != allMeasurementsOnRight.Count)
+        {
+            return false;
+        }
+        var containsTheSameMeasurements = allMeasurementsOnLeft.All(left => allMeasurementsOnRight.Count(right => right.ShallowEquals(left)) == 1);
+        return containsTheSameMeasurements;
     }
 
     public override int GetHashCode()
@@ -273,4 +354,47 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             qty => qty.GetHashCode()
         );
     }
+
+    public static Measurement Zero(MeasurementType measurementType)
+    {
+        return measurementType.Match<Measurement>(
+            distance => new Distance(distance, 0),
+            weight => new Weight(weight, 0),
+            duration => new Duration(duration, 0),
+            volume => new Volume(volume, 0),
+            area => new Area(area, 0),
+            qty => new Measurement(0)
+        );
+    }
+
+    public Validation<Measurement> GetAsCurrentType()
+    {
+        return this.GetAs(this.GetMeasurementType());
+    }
+
+    public  Measurement GetAsCurrentTypeWhenNonTimeType()
+    {
+        if( this.GetMeasurementType().IsTimeUnit)
+        {
+            throw new Exception("Cannot get as current type when measurement type is a time type.");
+        }
+        return this.GetAs(this.GetMeasurementType());
+    }
+    
+
+    public Measurement GetAsCurrentType(DateTime date)
+    {
+        return this.GetAs(this.GetMeasurementType(), date);
+    }
+
+    public bool HasSameMeasurementTypeAs(MeasurementType measurementType)
+    {
+        return measurementType.IsAreaUnit == this.GetMeasurementType().IsAreaUnit
+            && measurementType.IsDistanceUnit == this.GetMeasurementType().IsDistanceUnit
+            && measurementType.IsTimeUnit == this.GetMeasurementType().IsTimeUnit
+            && measurementType.IsVolumeUnit == this.GetMeasurementType().IsVolumeUnit
+            && measurementType.IsWeightUnit == this.GetMeasurementType().IsWeightUnit
+            && measurementType.IsInt == this.GetMeasurementType().IsInt; 
+    }
+
 }

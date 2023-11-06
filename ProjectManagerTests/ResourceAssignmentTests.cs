@@ -222,8 +222,14 @@ public class ResourceAssignmentTests
 
 
     // Can get Total assigned qty for a resource Required
-    [Fact]
-    public void CanGetTotalAssignedQtyForResourceRequired()
+    [Theory]
+    [InlineData(DistanceUnit.Meters)]
+    [InlineData(TimeUnit.Days)]
+    [InlineData(VolumeUnit.CubicMeters)]
+    [InlineData(WeightUnit.Kilograms)]
+    [InlineData(AreaUnit.SquareMeters)]
+    [InlineData(1)]
+    public void CanGetTotalAssignedQtyForResourceRequired(Measurement.MeasurementType measurementType)
     {
         string name = "Test Project";
         string description = "This is a test project";
@@ -231,13 +237,13 @@ public class ResourceAssignmentTests
         string taskDescription1 = "This is a test task 1";
         string resourceName = "Test Resource";
         string resourceDescription = "This is a test resource";
-        int resourceQuantity = 6;
+        Measurement resourceQuantity = Measurement.Create(measurementType, 6);
         string resourceAssignedName1 = "Test Resource Assigned 1";
         string resourceAssignedDescription1 = "This is a test resource assigned 1";
-        int resourceAssignedQuantity1 = 1;
+        Measurement resourceAssignedQuantity1 = Measurement.Create(measurementType, 1);
         string resourceAssignedName2 = "Test Resource Assigned 2";
         string resourceAssignedDescription2 = "This is a test resource assigned 2";
-        int resourceAssignedQuantity2 = 3;
+        var resourceAssignedQuantity2 = Measurement.Create(measurementType, 3);
 
         // Call the Project.Create() method
         Project project = Project.Create(name, description);
@@ -253,8 +259,122 @@ public class ResourceAssignmentTests
 
 
         // Assert the total Assigned Qty is correct
-        Assert.Equal(4, project.Tasks[0].ResourcesRequired.First().TotalAssignedQty);
-        Assert.Equal(2, project.Tasks[0].ResourcesRequired.First().QuantityRequiredRemaining);
-        
+        var actual = project.Tasks[0].ResourcesRequired.First().GetTotalAssignedQty();
+        var actualRemaining = project.Tasks[0].ResourcesRequired.First().GetQuantityRequiredRemaining;
+        Assert.Equal(4, actual.GetQty());
+        Assert.Equal(measurementType, actual.GetMeasurementType());
+        Assert.Equal(2, actualRemaining.GetQty());
+        Assert.Equal(measurementType, actualRemaining.GetMeasurementType());
+    }
+
+    [Fact]
+    public void CanGetTotalAssignedQtyForResourceRequiredWhenUnitsAreDifferent()
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName1 = "Test Task 1";
+        string taskDescription1 = "This is a test task 1";
+        string resourceName = "Test Resource";
+        string resourceDescription = "This is a test resource";
+        Measurement resourceQuantity = Volume.CubicMeters(1);
+        string resourceAssignedName1 = "Test Resource Assigned 1";
+        string resourceAssignedDescription1 = "This is a test resource assigned 1";
+        Measurement resourceAssignedQuantity1 = Volume.CubicCentimeters(500);
+        string resourceAssignedName2 = "Test Resource Assigned 2";
+        string resourceAssignedDescription2 = "This is a test resource assigned 2";
+        var resourceAssignedQuantity2 = Volume.CubicFeet(1);
+
+        // Call the Project.Create() method
+        Project project = Project.Create(name, description);
+        project.AddTask(taskName1, taskDescription1, Duration.Days(10));
+        var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
+        var resourceAssigned1 = ResourceAssigned.Create(resourceAssignedName1, resourceAssignedDescription1,
+            resourceAssignedQuantity1);
+        var resourceAssigned2 = ResourceAssigned.Create(resourceAssignedName2, resourceAssignedDescription2,
+            resourceAssignedQuantity2);
+        var result1 = project.AddResourceToTask(taskName1, resource);
+        var result2 = project.AssignResourceToResourceRequired(taskName1, resourceName, resourceAssigned1);
+        var result3 = project.AssignResourceToResourceRequired(taskName1, resourceName, resourceAssigned2);
+
+        Assert.True(result1.IsValid);
+        Assert.True(result2.IsValid);
+        Assert.True(result3.IsValid);
+
+        // Assert the total Assigned Qty is correct
+        var actual = project.Tasks[0].ResourcesRequired.First().GetTotalAssignedQty();
+
+        var mt = actual.GetSubMeasurements().First().GetMeasurementType();
+        Assert.Equal(2, actual.GetSubMeasurements().Count());
+        Assert.Equal(500,
+            actual.GetSubMeasurements().First(x => x.GetMeasurementType() == VolumeUnit.CubicCentimeters).GetQty());
+        Assert.Equal(1,
+            actual.GetSubMeasurements().First(x => x.GetMeasurementType() == VolumeUnit.CubicFeet).GetQty());
+
+        var actualRemaining = project.Tasks[0].ResourcesRequired.First().GetQuantityRequiredRemaining;
+        Assert.Equal(2, actualRemaining.GetSubMeasurements().Count());
+        Assert.Equal(-500,
+            actualRemaining.GetSubMeasurements().First(x => x.GetMeasurementType() == VolumeUnit.CubicCentimeters)
+                .GetQty());
+        Assert.Equal(-1,
+            actualRemaining.GetSubMeasurements().First(x => x.GetMeasurementType() == VolumeUnit.CubicFeet).GetQty());
+        Assert.Equal(0.9711832m, actualRemaining.GetAsCurrentTypeWhenNonTimeType().GetQty(), 7);
+    }
+
+    [Theory]
+    [InlineData(2, 1, 2023, 1)]
+    [InlineData(-1, 1, 2023, 2)]
+    [InlineData(1, 1, 2023, 4)]
+    [InlineData(0, 3, 2023, 1)]
+    public void CanGetTotalAssignedQtyForResourceRequiredWhenUnitsAreDifferentForDuration(int expectedDays,
+        int daysToAdd, int year, int month)
+    {
+        string name = "Test Project";
+        string description = "This is a test project";
+        string taskName1 = "Test Task 1";
+        string taskDescription1 = "This is a test task 1";
+        string resourceName = "Test Resource";
+        string resourceDescription = "This is a test resource";
+        Measurement resourceQuantity = Duration.Months(1);
+        string resourceAssignedName1 = "Test Resource Assigned 1";
+        string resourceAssignedDescription1 = "This is a test resource assigned 1";
+        Measurement resourceAssignedQuantity1 = Duration.Weeks(4);
+        string resourceAssignedName2 = "Test Resource Assigned 2";
+        string resourceAssignedDescription2 = "This is a test resource assigned 2";
+        var resourceAssignedQuantity2 = Duration.Days(daysToAdd);
+
+        // Call the Project.Create() method
+        Project project = Project.Create(name, description);
+        project.AddTask(taskName1, taskDescription1, Duration.Days(10));
+        var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
+        var resourceAssigned1 = ResourceAssigned.Create(resourceAssignedName1, resourceAssignedDescription1,
+            resourceAssignedQuantity1);
+        var resourceAssigned2 = ResourceAssigned.Create(resourceAssignedName2, resourceAssignedDescription2,
+            resourceAssignedQuantity2);
+        var result1 = project.AddResourceToTask(taskName1, resource);
+        var result2 = project.AssignResourceToResourceRequired(taskName1, resourceName, resourceAssigned1);
+        var result3 = project.AssignResourceToResourceRequired(taskName1, resourceName, resourceAssigned2);
+
+        Assert.True(result1.IsValid);
+        Assert.True(result2.IsValid);
+        Assert.True(result3.IsValid);
+
+        // Assert the total Assigned Qty is correct
+        var actual = project.Tasks[0].ResourcesRequired.First().GetTotalAssignedQty();
+
+        var mt = actual.GetSubMeasurements().First().GetMeasurementType();
+        Assert.Equal(2, actual.GetSubMeasurements().Count());
+        Assert.Equal(4, actual.GetSubMeasurements().First(x => x.GetMeasurementType() == TimeUnit.Weeks).GetQty());
+        Assert.Equal(daysToAdd,
+            actual.GetSubMeasurements().First(x => x.GetMeasurementType() == TimeUnit.Days).GetQty());
+
+        var actualRemaining = project.Tasks[0].ResourcesRequired.First().GetQuantityRequiredRemaining;
+        var actualRemainingInDays = actualRemaining.GetAsCurrentType(new DateTime(year, month, 1));
+        Assert.Equal(2, actualRemaining.GetSubMeasurements().Count());
+        Assert.Equal(-4,
+            actualRemaining.GetSubMeasurements().First(x => x.GetMeasurementType() == TimeUnit.Weeks).GetQty());
+        Assert.Equal(0 - daysToAdd,
+            actualRemaining.GetSubMeasurements().First(x => x.GetMeasurementType() == TimeUnit.Days).GetQty());
+        Assert.Equal(expectedDays, actualRemainingInDays.GetQty());
+        Assert.Equal(TimeUnit.Days, actualRemainingInDays.GetMeasurementType());
     }
 }
