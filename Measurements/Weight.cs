@@ -1,12 +1,19 @@
 ﻿namespace Measurements;
 
-public struct Weight: IEqualityComparer<Weight>
+public struct Weight : IEqualityComparer<Weight>, IComparable<Weight>
 {
     private IList<Weight> otherWeights;
     public WeightUnit WeightType { get; set; }
     public decimal Amount { get; set; }
 
-   // equals
+    // equals
+    public int CompareTo(Weight other)
+    {
+        var thisUnit = this.GetAsAmount(this.WeightType);
+        var otherUnit = other.GetAsAmount(this.WeightType);
+        return thisUnit.CompareTo(otherUnit);
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj is Weight weight)
@@ -90,6 +97,7 @@ public struct Weight: IEqualityComparer<Weight>
                 otherWeights[i] = new Weight(weight.WeightType, otherWeights[i].Amount + weight.Amount);
             }
         }
+
         if (!otherWeights.Any(x => x.WeightType == weight.WeightType) && weight.WeightType != WeightType)
         {
             otherWeights.Add(new Weight(weight.WeightType, weight.Amount));
@@ -101,19 +109,20 @@ public struct Weight: IEqualityComparer<Weight>
     public decimal GetAsAmount(WeightUnit targetUnit, int rounded = 3)
     {
         var total = OtherWeights.Sum(x => x.GetAsAmount(targetUnit));
-        
+
         if (WeightType == targetUnit)
         {
             return total + Amount;
         }
-        return total+ WeightConversionService.ConvertWeight(Amount, WeightType, targetUnit);
+
+        return total + WeightConversionService.ConvertWeight(Amount, WeightType, targetUnit);
     }
 
     public Weight ConvertTo(WeightUnit targetUnit)
     {
         return new Weight(targetUnit, GetAsAmount(targetUnit));
     }
-    
+
     public override string ToString()
     {
         var weights = GetWeightsGrouped();
@@ -126,6 +135,7 @@ public struct Weight: IEqualityComparer<Weight>
                 // Remove the last "s" for singular form.
                 weightUnitText = weightUnitText.TrimEnd('s');
             }
+
             result += $"{weight.Amount} {weightUnitText} ";
         }
 
@@ -139,6 +149,7 @@ public struct Weight: IEqualityComparer<Weight>
         {
             result.AddWeight(otherWeight);
         }
+
         result.AddWeight(weight2);
         return result;
     }
@@ -149,7 +160,7 @@ public struct Weight: IEqualityComparer<Weight>
         Amount = amount;
         otherWeights = new List<Weight>();
     }
-    
+
     public static Weight Milligrams(decimal amount)
     {
         return new Weight(WeightUnit.Milligrams, amount);
@@ -183,8 +194,8 @@ public struct Weight: IEqualityComparer<Weight>
     public static Weight Stones(decimal amount)
     {
         return new Weight(WeightUnit.Stones, amount);
-    }    
-    
+    }
+
     public static Weight USTons(decimal amount)
     {
         return new Weight(WeightUnit.USTons, amount);
@@ -200,7 +211,7 @@ public struct Weight: IEqualityComparer<Weight>
     {
         return HashCode.Combine(obj.otherWeights, (int)obj.WeightType, obj.Amount);
     }
-    
+
     public static bool operator ==(Weight? left, Weight right)
     {
         return left.Equals(right);
@@ -209,5 +220,20 @@ public struct Weight: IEqualityComparer<Weight>
     public static bool operator !=(Weight? left, Weight right)
     {
         return !(left == right);
+    }
+}
+
+public static class WeightExtensions
+{
+    public static IEnumerable<Weight> GetInOrder(this IEnumerable<Weight> weights)
+    {
+        var withSmallestUnit = weights.Select(a => (original: a, asSmallest: a.ConvertTo(WeightUnit.Milligrams)));
+        return withSmallestUnit.OrderBy(a => a).Select(a => a.original);
+    }
+
+    public static IEnumerable<Weight> GetInOrderDescending(this IEnumerable<Weight> weights)
+    {
+        var withSmallestUnit = weights.Select(a => (original: a, asSmallest: a.ConvertTo(WeightUnit.Milligrams)));
+        return withSmallestUnit.OrderByDescending(a => a).Select(a => a.original);
     }
 }

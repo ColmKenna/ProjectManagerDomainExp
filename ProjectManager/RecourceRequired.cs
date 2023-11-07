@@ -3,6 +3,73 @@ using PrimativeExtensions;
 
 namespace ProjectManager;
 
+// Class to represent the Resource Provider
+public class ResourceProvider
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Description { get; private set; }
+
+    public static ResourceProvider Create(string name, string description)
+    {
+        return new ResourceProvider
+        {
+            Name = name,
+            Description = description
+        };
+    }
+
+}
+
+// Resource
+public class Resource
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Description { get; private set; }
+    public Measurement Quantity { get; private set; }
+    public ResourceProvider ResourceProvider { get; private set; }
+
+    public static Resource Create(string resourceName, string resourceDescription, Measurement resourceQuantity, ResourceProvider resourceProvider)
+    {
+        return new Resource
+        {
+            Name = resourceName,
+            Description = resourceDescription,
+            Quantity = resourceQuantity,
+            ResourceProvider = resourceProvider
+        };
+    }
+}
+
+// Cost for a Resource
+public class ResourceCost
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Description { get; private set; }
+    public Measurement Quantity { get; private set; }
+    public Resource Resource { get; private set; }
+    public decimal Cost { get; private set; }
+
+    public static ResourceCost Create(string resourceName, string resourceDescription, Measurement resourceQuantity, Resource resource, Decimal cost)
+    {
+        return new ResourceCost
+        {
+            Name = resourceName,
+            Description = resourceDescription,
+            Quantity = resourceQuantity,
+            Resource = resource,
+            Cost = cost
+        };
+    }
+}
+
+
+
+
+
+
 public class RecourceRequired
 {
     public int Id { get; private set; }

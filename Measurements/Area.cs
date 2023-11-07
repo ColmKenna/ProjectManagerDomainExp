@@ -1,12 +1,33 @@
 namespace Measurements;
 
-public struct Area : IEqualityComparer<Area>
+public static class AreaExtensionClass
+{
+    public static IEnumerable<Area> GetInOrder(this IEnumerable<Area> areas)
+    {
+        var withSmallestUnit = areas.Select(a => (original: a, asSmallest: a.GetAs(AreaUnit.SquareMillimeters)));
+        return withSmallestUnit.OrderBy(a => a).Select(a => a.original);
+    }
+    
+    public static IEnumerable<Area> GetInOrderDescending(this IEnumerable<Area> areas)
+    {
+        var withSmallestUnit = areas.Select(a => (original: a, asSmallest: a.GetAs(AreaUnit.SquareMillimeters)));
+        return withSmallestUnit.OrderByDescending(a => a).Select(a => a.original);
+    }
+}
+public struct Area : IEqualityComparer<Area>, IComparable<Area>
 {
     private IList<Area> otherAreas;
     public AreaUnit AreaType { get; set; }
     public decimal Amount { get; set; }
 
     // equals
+    public int CompareTo(Area other)
+    {
+        var thisUnit = this.GetAs(this.AreaType);
+        var otherUnit = other.GetAs(this.AreaType);
+        return thisUnit.CompareTo(otherUnit);
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj is Area area)

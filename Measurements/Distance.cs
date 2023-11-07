@@ -1,6 +1,6 @@
 namespace Measurements;
 
-public struct Distance : IEqualityComparer<Distance>
+public struct Distance : IEqualityComparer<Distance>, IComparable<Distance>
 {
     private readonly List<Distance> otherDistances;
 
@@ -114,6 +114,7 @@ public struct Distance : IEqualityComparer<Distance>
         return new Distance(targetUnit, GetAs(targetUnit));
     }
 
+
     public override string ToString()
     {
         var distances = GetDistancesGrouped();
@@ -187,6 +188,13 @@ public struct Distance : IEqualityComparer<Distance>
     public bool Equals(Distance x, Distance y)
     {
         return x.otherDistances.Equals(y.otherDistances) && x.DistanceType == y.DistanceType && x.Amount == y.Amount;
+    }
+
+    public int CompareTo(Distance other)
+    {
+        var thisDistance = GetAs(DistanceType);
+        var otherDistance = other.GetAs(this.DistanceType);
+        return thisDistance.CompareTo(otherDistance);
     }
 
     public int GetHashCode(Distance obj)

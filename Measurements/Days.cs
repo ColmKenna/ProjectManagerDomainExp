@@ -136,6 +136,20 @@ public struct Duration
         otherDurations = new List<Duration>();
     }
 
+    
+    public IList<TimeUnit> GetTimeUnits()
+    {
+        var timeUnits = new List<TimeUnit>();
+        timeUnits.Add(Time);
+        foreach (var subDuration in OtherDurations)
+        {
+            timeUnits.AddRange(subDuration.GetTimeUnits());
+        }
+
+        return timeUnits;
+    }
+    
+    
     public DateTime GetDate(DateTime startDate)
     {
         foreach (var subDuration in OtherDurations)
@@ -287,6 +301,30 @@ public static class DurationExtensions
     {
         duration.AddDuration(Duration.Hours(hours));
         return duration;
+    }
+    
+    public static IEnumerable<Duration> GetInOrder(this IEnumerable<Duration> durations, DateTime? startDate)
+    {
+        var timeUnits = durations.SelectMany(x => x.GetTimeUnits());
+        if (!startDate.HasValue && timeUnits.Any(x=> x == TimeUnit.Months || x == TimeUnit.Quarters || x == TimeUnit.Years ))
+        {
+            throw new Exception("Cannot order durations with months, quarters or years when no date sent in");
+        }
+        
+        var asSmallestUnit = durations.Select(originalDuration => (original: originalDuration,asHours: originalDuration.ConvertTo(TimeUnit.Hours, startDate)));
+        var ordered = asSmallestUnit.OrderBy(d => d.asHours.Units).Select(d => d.original);
+        return ordered;
+    }
+    public static IEnumerable<Duration> GetInOrderDescending(this IEnumerable<Duration> durations, DateTime? startDate)
+    {
+        var timeUnits = durations.SelectMany(x => x.GetTimeUnits());
+        if (!startDate.HasValue && timeUnits.Any(x=> x == TimeUnit.Months || x == TimeUnit.Quarters || x == TimeUnit.Years ))
+        {
+            throw new Exception("Cannot order durations with months, quarters or years when no date sent in");
+        }
+        var asSmallestUnit = durations.Select(originalDuration => (original: originalDuration,asHours: originalDuration.ConvertTo(TimeUnit.Hours, startDate)));
+        var ordered = asSmallestUnit.OrderByDescending(d => d.asHours.Units).Select(d => d.original);
+        return ordered;
     }
     
     

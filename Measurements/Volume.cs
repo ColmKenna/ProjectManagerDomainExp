@@ -1,12 +1,20 @@
 namespace Measurements;
 
-public struct Volume : IEqualityComparer<Volume>
+    
+public struct Volume : IEqualityComparer<Volume>, IComparable<Volume>
 {
     private IList<Volume> otherVolumes;
     public VolumeUnit VolumeType { get; set; }
     public decimal Amount { get; set; }
 
     // equals
+    public int CompareTo(Volume other)
+    {
+        var thisUnit = this.GetAs(this.VolumeType);
+        var otherUnit = other.GetAs(this.VolumeType);
+        return thisUnit.CompareTo(otherUnit);
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj is Volume volume)
