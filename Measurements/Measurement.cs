@@ -338,6 +338,8 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
         return !(left == right);
     }
 
+
+
     public override bool Equals(object? obj)
     {
         return Equals((Measurement)this, (Measurement)obj);

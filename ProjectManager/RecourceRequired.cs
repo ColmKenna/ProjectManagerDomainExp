@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using Measurements;
 using PrimativeExtensions;
 
@@ -27,48 +28,54 @@ public class Resource
     public int Id { get; private set; }
     public string Name { get; private set; }
     public string Description { get; private set; }
-    public Measurement Quantity { get; private set; }
     public ResourceProvider ResourceProvider { get; private set; }
 
-    public static Resource Create(string resourceName, string resourceDescription, Measurement resourceQuantity, ResourceProvider resourceProvider)
+    private Resource()
+    {
+        
+    }
+    public static Resource Create(string resourceName, string resourceDescription, ResourceProvider resourceProvider)
     {
         return new Resource
         {
             Name = resourceName,
             Description = resourceDescription,
-            Quantity = resourceQuantity,
             ResourceProvider = resourceProvider
         };
     }
 }
 
 // Cost for a Resource
-public class ResourceCost
+public class ResourceCost 
 {
+    private ResourceCost(Measurement quantity, Resource resource, decimal cost)
+    {
+        Quantity = quantity;
+        Resource = resource;
+        Cost = cost;
+    }
+
+    public static ResourceCost CreateInstance(Measurement quantity, Resource resource, decimal cost)
+    {
+        return new ResourceCost(quantity, resource, cost);
+    }
+
     public int Id { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
     public Measurement Quantity { get; private set; }
     public Resource Resource { get; private set; }
     public decimal Cost { get; private set; }
-
-    public static ResourceCost Create(string resourceName, string resourceDescription, Measurement resourceQuantity, Resource resource, Decimal cost)
+    public Measurement GetAs(Measurement.MeasurementType measurementType, DateTime? onDate = null)
     {
-        return new ResourceCost
-        {
-            Name = resourceName,
-            Description = resourceDescription,
-            Quantity = resourceQuantity,
-            Resource = resource,
-            Cost = cost
-        };
+        return Quantity.GetAs(measurementType, onDate);
     }
+    
+    public decimal GetCostPer(Measurement measurement, DateTime? onDate = null)
+    {
+        
+        return Cost / GetAs(measurement.GetMeasurementType() , onDate).GetQty();
+    }
+
 }
-
-
-
-
-
 
 public class RecourceRequired
 {

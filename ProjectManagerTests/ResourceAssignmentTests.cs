@@ -378,3 +378,21 @@ public class ResourceAssignmentTests
         Assert.Equal(TimeUnit.Days, actualRemainingInDays.GetMeasurementType());
     }
 }
+
+public class ResourcePriceTests
+{
+    
+    [Fact]
+    public void CanCreateBasicPrice()
+    {
+        var resourceProvider = ResourceProvider.Create("Test Resource Provider", "This is a test resource provider");
+        var resource = Resource.Create("Test Resource", "This is a test resource", resourceProvider);
+        var resourcePrice = ResourceCost.CreateInstance(Measurement.Create(WeightUnit.Kilograms, 1), resource, 10);
+
+
+
+
+
+    }
+    
+}
