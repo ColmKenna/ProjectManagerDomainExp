@@ -164,10 +164,18 @@ public class BuyNGetCheapestFreeStrategy : IPricingStrategy
 
 public struct DiscountResult
 {
-    public IEnumerable<(Measurement Measurement, Resource Resource)> ItemsUsedForDiscount { get; set; }
-    public IEnumerable<(Measurement Measurement, Resource Resource)> ItemsDiscounted { get; set; }
+        public IList<(Measurement Measurement, Resource Resource)> ItemsUsedForDiscount { get; set; }
+    public IList<(Measurement Measurement, Resource Resource)> ItemsDiscounted { get; set; }
 
     public decimal Discount { get; set; }
+
+    public DiscountResult()
+    {
+        ItemsUsedForDiscount = new List<(Measurement Measurement, Resource Resource)>();
+        ItemsDiscounted = new List<(Measurement Measurement, Resource Resource)>();
+        Discount = 0;
+    
+    }
 }
 
 public class MealDealStyleStrategy : IPricingStrategy
@@ -239,8 +247,8 @@ public class MealDealStyleStrategy : IPricingStrategy
         return new DiscountResult()
         {
             Discount = totalDiscount,
-            ItemsUsedForDiscount = itemsToRemove.Select(x => (x.Quantity, x.Resource)),
-            ItemsDiscounted = itemsToRemove.Select(x => (x.Quantity, x.Resource))
+            ItemsUsedForDiscount = itemsToRemove.Select(x => (x.Quantity, x.Resource)).ToList(),
+            ItemsDiscounted = itemsToRemove.Select(x => (x.Quantity, x.Resource)).ToList()
         };
     }
 }

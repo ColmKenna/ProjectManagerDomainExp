@@ -5,77 +5,10 @@ using PrimativeExtensions;
 namespace ProjectManager;
 
 // Class to represent the Resource Provider
-public class ResourceProvider
-{
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-
-    public static ResourceProvider Create(string name, string description)
-    {
-        return new ResourceProvider
-        {
-            Name = name,
-            Description = description
-        };
-    }
-
-}
 
 // Resource
-public class Resource
-{
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-    public ResourceProvider ResourceProvider { get; private set; }
-
-    private Resource()
-    {
-        
-    }
-    public static Resource Create(string resourceName, string resourceDescription, ResourceProvider resourceProvider)
-    {
-        return new Resource
-        {
-            Name = resourceName,
-            Description = resourceDescription,
-            ResourceProvider = resourceProvider
-        };
-    }
-}
 
 // Cost for a Resource
-public class ResourceCost 
-{
-    private ResourceCost(Measurement quantity, Resource resource, decimal cost)
-    {
-        Quantity = quantity;
-        Resource = resource;
-        Cost = cost;
-    }
-
-    public static ResourceCost CreateInstance(Measurement quantity, Resource resource, decimal cost)
-    {
-        return new ResourceCost(quantity, resource, cost);
-    }
-
-    public int Id { get; private set; }
-    public Measurement Quantity { get; private set; }
-    public Resource Resource { get; private set; }
-    public decimal Cost { get; private set; }
-    public Measurement GetAs(Measurement.MeasurementType measurementType, DateTime? onDate = null)
-    {
-        return Quantity.GetAs(measurementType, onDate);
-    }
-    
-    public decimal GetCostPer(Measurement measurement, DateTime? onDate = null)
-    {
-        
-        return Cost / GetAs(measurement.GetMeasurementType() , onDate).GetQty();
-    }
-
-}
 
 public class RecourceRequired
 {
