@@ -75,7 +75,7 @@ public class MealDealStyleStrategyTest
 
         var totalBeforeDiscount = 100m + 120m + 200m  + 300m + 130m;
         var expectedDiscount = totalBeforeDiscount - 300m;
-        var result = mealDealStyleStrategy.GetPrice(itemsOrdered);
+        var result = mealDealStyleStrategy.GetDiscount(itemsOrdered);
         
         Assert.Equal(expectedDiscount, result.Discount );
         Assert.Equal(itemsToBeDiscounted.Count, result.ItemsUsedForDiscount.Count());

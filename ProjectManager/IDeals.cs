@@ -4,11 +4,12 @@ using PrimativeExtensions;
 
 namespace ProjectManager;
 
-public interface IPricingStrategy
+public interface IDeals
 {
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource) > items);
 }
 
-public class QuantityPricingStrategy : IPricingStrategy
+public class QuantityPricingStrategy 
 {
     private IList<ResourceCost> quantityPrices;
 
@@ -76,9 +77,12 @@ public class QuantityPricingStrategy : IPricingStrategy
     {
         var orderedQuantityPrices = quantityPrices
             .OrderByDescending(x => x.GetAs( quantity.GetMeasurementType(), onDate).GetQty())
-            .ToList(); 
+            .ToList();
+        
+        
         var remainingQty = quantity.GetQty();
         var totalCost = 0m;
+        var used = Measurement.Zero(quantity.GetMeasurementType());
         foreach (var quantityCost in orderedQuantityPrices)
         {
             var currentQty = quantityCost.GetAs(quantity.GetMeasurementType(), onDate);
@@ -87,19 +91,17 @@ public class QuantityPricingStrategy : IPricingStrategy
             {
                 totalCost += quantityCost.Cost * am;
                 remainingQty -= currentQty.GetQty() * am;
+                used += currentQty ;
             }
-            
-            
-            
         }
-        
+         
         return totalCost;
     }
     
     
 }
 
-public class BuyNGetCheapestFreeStrategy : IPricingStrategy
+public class BuyNGetCheapestFreeStrategy : IDeals
 {
     private int buyN;
     private int getCheapestFree;
@@ -119,12 +121,13 @@ public class BuyNGetCheapestFreeStrategy : IPricingStrategy
     }
 
 
-    public DiscountResult GetPrice(IList<ResourceCost> items)
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource)> items)
     {
-        // find all items that are in the quantityPrices
-        var itemsInQuantityPrices =
-            items.Where(x => quantityPrices.Any(y => y.Resource == x.Resource  && y.Quantity == x.Quantity ))
-                .OrderByDescending(x => x.Cost)
+        
+
+        var itemsInQuantityPrices = 
+            items
+                .SelectMany(x => quantityPrices.Where(y => y.Resource == x.resource && y.Quantity  == x.measurement))
                 .ToList();
 
         if (itemsInQuantityPrices.Count() < buyN)
@@ -144,7 +147,7 @@ public class BuyNGetCheapestFreeStrategy : IPricingStrategy
 
         // loop through orderedItems and get the price of every buyN item
         var totalDiscount = 0m;
-        var itemsUsedForDiscount = items.Take(itemsToUseInDiscount).Select(x => (x.Quantity, x.Resource)).ToList();
+        var itemsUsedForDiscount = items.Take(itemsToUseInDiscount).Select(x => (x.measurement, Resource: x.resource)).ToList();
         var itemsDiscounted = new List<(Measurement, Resource)>();
         for (var i = 1; i <=itemsInQuantityPrices.Count(); i++)
         {
@@ -162,23 +165,7 @@ public class BuyNGetCheapestFreeStrategy : IPricingStrategy
     }
 }
 
-public struct DiscountResult
-{
-        public IList<(Measurement Measurement, Resource Resource)> ItemsUsedForDiscount { get; set; }
-    public IList<(Measurement Measurement, Resource Resource)> ItemsDiscounted { get; set; }
-
-    public decimal Discount { get; set; }
-
-    public DiscountResult()
-    {
-        ItemsUsedForDiscount = new List<(Measurement Measurement, Resource Resource)>();
-        ItemsDiscounted = new List<(Measurement Measurement, Resource Resource)>();
-        Discount = 0;
-    
-    }
-}
-
-public class MealDealStyleStrategy : IPricingStrategy
+public class MealDealStyleStrategy : IDeals
 {
     public decimal MealDealPrice { get; }
     private List<MealDealGroup> mealDealGroups;
@@ -208,20 +195,12 @@ public class MealDealStyleStrategy : IPricingStrategy
         return this;
     }
 
-    public Validation<MealDealStyleStrategy> AddResourceToMealDealGroup(MealDealGroup mealDealGroup,
-        Measurement quantity, Resource resource, decimal cost)
-    {
-        var mealDealGroupToUpdate = mealDealGroups.First(x => x == mealDealGroup);
-        mealDealGroupToUpdate.AddResource(quantity, resource, cost);
-        return this;
-    }
-
     public IReadOnlyCollection<MealDealGroup> GetMealDealGroups()
     {
         return mealDealGroups;
     }
 
-    public DiscountResult GetPrice(
+    public DiscountResult GetDiscount(
         IList<(Measurement, Resource)> items)
     {
         // Create a dictionary of each meal deal group and the number of items in that group

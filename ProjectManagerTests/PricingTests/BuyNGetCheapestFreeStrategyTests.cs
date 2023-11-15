@@ -1,3 +1,4 @@
+using Measurements;
 using ProjectManager;
 
 namespace ProjectManagerTests.PricingTests;
@@ -14,21 +15,21 @@ public class BuyNGetCheapestFreeStrategyTests
         var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
         buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(quantity, resource, cost));
 
-        var items = Enumerable.Range(1, 3).Select(x => ResourceCost.CreateInstance(quantity, resource, cost)).ToList();
+        var items = Enumerable.Range(1, 3).Select(x => (new Measurement( quantity), resource)).ToList();
 
 
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
         Assert.Equal(100m, result.Discount);
         Assert.Equal(items.Count(), result.ItemsUsedForDiscount.Count());
         foreach (var itemToBeDiscounted in items)
         {
-            var item = result.ItemsUsedForDiscount.FirstOrDefault(x => x.Resource == itemToBeDiscounted.Resource);
-            Assert.Equal(itemToBeDiscounted.Quantity, item.Measurement);
+            var item = result.ItemsUsedForDiscount.FirstOrDefault(x => x.Resource == itemToBeDiscounted.resource);
+            Assert.Equal(itemToBeDiscounted.Item1 , item.Measurement);
         }
 
         Assert.Single(result.ItemsDiscounted);
-        Assert.Equal(items.First().Quantity, result.ItemsDiscounted.First().Measurement);
-        Assert.Equal(items.First().Resource, result.ItemsDiscounted.First().Resource);
+        Assert.Equal(items.First().Item1 , result.ItemsDiscounted.First().Measurement);
+        Assert.Equal(items.First().resource , result.ItemsDiscounted.First().Resource);
     }
 
     [Fact]
@@ -46,17 +47,17 @@ public class BuyNGetCheapestFreeStrategyTests
 
 
 
-        var items = new List<ResourceCost>();
-        items.AddRange(Enumerable.Range(1, 2).Select(x => ResourceCost.CreateInstance(1, resource, 20)));
-        items.Add(ResourceCost.CreateInstance(1, resource2, 15));
+        var items = new List<(Measurement measurement, Resource resource)>();
+        items.AddRange(Enumerable.Range(1, 2).Select(x => (new Measurement(1), resource)));
+        items.Add((1, resource2));
 
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
         Assert.Equal(15m, result.Discount);
         Assert.Equal(items.Count(), result.ItemsUsedForDiscount.Count());
         foreach (var itemToBeDiscounted in items)
         {
-            var item = result.ItemsUsedForDiscount.FirstOrDefault(x => x.Resource == itemToBeDiscounted.Resource);
-            Assert.Equal(itemToBeDiscounted.Quantity, item.Measurement);
+            var item = result.ItemsUsedForDiscount.FirstOrDefault(x => x.Resource == itemToBeDiscounted.resource );
+            Assert.Equal(itemToBeDiscounted.measurement , item.Measurement);
         }
 
     }
@@ -64,10 +65,8 @@ public class BuyNGetCheapestFreeStrategyTests
     [Fact]
     public void CanCreateBuyNGetCheapestFreeStrategyGivesBestForCustomerOnTheRemainderItems()
     {
-        var resource = Resource.Create("Test Resource", "Test Resource Description",
-            ResourceProvider.Create("Test Provider", "Test Provider Description"));
-        var resource2 = Resource.Create("Test Resource 2", "Test Resource Description 2",
-            ResourceProvider.Create("Test Provider 2", "Test Provider Description 2"));
+        var resource = Resource.Create("Test Resource", "Test Resource Description", ResourceProvider.Create("Test Provider", "Test Provider Description"));
+        var resource2 = Resource.Create("Test Resource 2", "Test Resource Description 2", ResourceProvider.Create("Test Provider 2", "Test Provider Description 2"));
 
 
         var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
@@ -76,11 +75,11 @@ public class BuyNGetCheapestFreeStrategyTests
 
 
 
-        var items = new List<ResourceCost>();
-        items.AddRange(Enumerable.Range(1, 3).Select(x => ResourceCost.CreateInstance(1, resource, 20)));
-        items.Add(ResourceCost.CreateInstance(1, resource2, 15));
+        var items = new List<(Measurement measurement, Resource resource)>();
+        items.AddRange(Enumerable.Range(1, 3).Select(x => (new Measurement(1), resource)));
+        items.Add((1, resource2));
 
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
         var itemsUsedForDiscount = result.ItemsDiscounted.ToList();
         
         Assert.Equal(20m, result.Discount);
@@ -107,11 +106,11 @@ public class BuyNGetCheapestFreeStrategyTests
 
 
 
-        var items = new List<ResourceCost>();
-        items.AddRange(Enumerable.Range(1, 4).Select(x => ResourceCost.CreateInstance(1, resource, 20)));
-        items.AddRange(Enumerable.Range(1,3).Select(x =>   ResourceCost.CreateInstance(1, resource2, 15)));
+        var items = new List<(Measurement, Resource)>();
+        items.AddRange(Enumerable.Range(1, 4).Select(x => (new Measurement( 1), resource)));
+        items.AddRange(Enumerable.Range(1,3).Select(x =>   (new Measurement( 1), resource2)));
 
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
         var itemsDiscounted = result.ItemsDiscounted.ToList();
         
         Assert.Equal(35m, result.Discount);
@@ -133,8 +132,8 @@ public class BuyNGetCheapestFreeStrategyTests
         var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
         buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
     
-        var items = Enumerable.Range(1, 2).Select(x => ResourceCost.CreateInstance(1, resource, 100m)).ToList();
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var items = Enumerable.Range(1, 2).Select(x => (new Measurement( 1), resource)).ToList();
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
     
         Assert.Equal(0m, result.Discount);
     }
@@ -147,8 +146,8 @@ public class BuyNGetCheapestFreeStrategyTests
         var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
         buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
     
-        var items = Enumerable.Range(1, 2).Select(x => ResourceCost.CreateInstance(1, resource, 100m)).ToList();
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var items = Enumerable.Range(1, 2).Select(x => (new  Measurement(1), resource)).ToList();
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
     
         Assert.Equal(0m, result.Discount);
         Assert.Empty(result.ItemsDiscounted); // Should be empty not be null
@@ -163,8 +162,9 @@ public class BuyNGetCheapestFreeStrategyTests
         var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
         buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
     
-        var items = Enumerable.Range(1, 3).Select(x => ResourceCost.CreateInstance(1, resource, 100m)).ToList();
-        var result = buyNGetCheapestFreeStrategy.GetPrice(items);
+        var items = Enumerable.Range(1, 3).Select(x => (new  Measurement(1), resource)).ToList();
+        
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
     
         Assert.Equal(100m, result.Discount);
         Assert.Equal(3, result.ItemsUsedForDiscount.Count());

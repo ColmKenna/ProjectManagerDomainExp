@@ -1,6 +1,10 @@
 ﻿using Measurements;
+using PrimativeExtensions;
 
 namespace ProjectManager;
+
+
+
 
 public class ResourceProvider
 {
@@ -17,15 +21,21 @@ public class ResourceProvider
         };
     }
     
+    
+    
     public Resource CreateResource(string resourceName, string resourceDescription)
     {
         return Resource.Create(resourceName, resourceDescription, this);
     }
     
-    public ResourceCost CreateResourceCost(Measurement quantity, Resource resource, decimal cost)
+    public Validation< ResourceCost> CreateResourceCost(Measurement quantity, Resource resource, decimal cost)
     {
+        if (resource.ResourceProvider != this)
+        {
+            return Validation< ResourceCost>.Fail("Resource Provider does not match");
+            
+        }
+        
         return ResourceCost.CreateInstance(quantity, resource, cost);
     }
-    
-
 }
