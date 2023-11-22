@@ -5,7 +5,7 @@ namespace Measurements;
 public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>,
     IEqualityComparer<Measurement>
 {
-    public class MeasurementType : Either<DistanceUnit, WeightUnit, TimeUnit, VolumeUnit, AreaUnit, int>
+        public class MeasurementType : Either<DistanceUnit, WeightUnit, TimeUnit, VolumeUnit, AreaUnit, int>
     {
         public MeasurementType(DistanceUnit value1) : base(value1)
         {
@@ -211,52 +211,53 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             return Validation<Measurement>.Fail($"Cannot convert {this.GetMeasurementType()} to {unitT}");
         }
 
-        return Match<Measurement>(
-            distance => distance.ConvertTo(((Maybe<DistanceUnit>)unitT).Value),
-            weight => weight.ConvertTo(((Maybe<WeightUnit>)unitT).Value),
+        return Match<Validation<Measurement>>(
+            distance => (Measurement)distance.ConvertTo(((Maybe<DistanceUnit>)unitT).Value),
+            weight =>(Measurement) weight.ConvertTo(((Maybe<WeightUnit>)unitT).Value),
             duration =>
             {
                 if (date == null && duration.Time.ContainedIn(TimeUnit.Quarters, TimeUnit.Months, TimeUnit.Years))
                 {
-                    throw new Exception("Date must be provided when converting a duration to a different time unit.");
+                  //  ("Date must be provided when converting a duration to a different time unit.");
+                  return Validation<Measurement>.Fail($"Date must be provided when converting to {duration.Time} from {unitT}");
                 }
 
                 var otherDurations = duration.OtherDurations.ToList();
                 if (otherDurations.Any(x => x.Time == TimeUnit.Hours))
                 {
-                    return duration.ConvertTo(TimeUnit.Hours, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Hours, date);
                 }
 
                 if (otherDurations.Any(x => x.Time == TimeUnit.Days))
                 {
-                    return duration.ConvertTo(TimeUnit.Days, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Days, date);
                 }
 
                 if (otherDurations.Any(x => x.Time == TimeUnit.Weeks))
                 {
-                    return duration.ConvertTo(TimeUnit.Weeks, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Weeks, date);
                 }
 
                 if (otherDurations.Any(x => x.Time == TimeUnit.Months))
                 {
-                    return duration.ConvertTo(TimeUnit.Months, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Months, date);
                 }
 
                 if (otherDurations.Any(x => x.Time == TimeUnit.Quarters))
                 {
-                    return duration.ConvertTo(TimeUnit.Quarters, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Quarters, date);
                 }
 
                 if (otherDurations.Any(x => x.Time == TimeUnit.Years))
                 {
-                    return duration.ConvertTo(TimeUnit.Years, date);
+                    return (Measurement)duration.ConvertTo(TimeUnit.Years, date);
                 }
 
-                return duration.ConvertTo(((Maybe<TimeUnit>)unitT).Value, date);
+                return (Measurement)duration.ConvertTo(((Maybe<TimeUnit>)unitT).Value, date);
             },
-            volume => volume.ConvertTo(((Maybe<VolumeUnit>)unitT).Value),
-            area => area.ConvertTo(((Maybe<AreaUnit>)unitT).Value),
-            qty => qty
+            volume => (Measurement)volume.ConvertTo(((Maybe<VolumeUnit>)unitT).Value),
+            area => (Measurement)area.ConvertTo(((Maybe<AreaUnit>)unitT).Value),
+            qty => (Measurement)qty
         );
     }
 
@@ -267,6 +268,7 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
     public static implicit operator Measurement(Area value) => new Measurement(value);
     public static implicit operator Measurement(int value) => new Measurement(value);
 
+    
     // overload operator +
     public static Measurement operator +(Measurement left, Measurement right)
     {
@@ -307,6 +309,13 @@ public class Measurement : Either<Distance, Weight, Duration, Volume, Area, int>
             area => area + right.AreaValue.Value,
             qty => qty + right.IntValue.Value
         );
+    }
+    
+    // - operator
+    public static Measurement operator -(Measurement left, Measurement right)
+    {
+        var rightByMinusOne = right.Map(x => x * -1);
+        return left + rightByMinusOne;
     }
 
 
@@ -528,5 +537,12 @@ public static class MeasurementExtensions
 
         var first = enumerable.First();
         return enumerable.Skip(1).All(current => first.HasSameMeasurementTypeAs(current));
+    }
+    
+    public static IEnumerable<Measurement> Compress(this IEnumerable<Measurement> measurements)
+    {
+        var grouped = measurements.GroupBy(x => x.GetMeasurementType());
+        var compressed = grouped.Select(x => x.Aggregate((current, next) => current + next));
+        return compressed;
     }
 }

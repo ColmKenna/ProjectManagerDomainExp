@@ -13,7 +13,7 @@ public class ProjectCreationTests
         string description = "This is a test project";
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
 
         // Check that the project was created and has the correct properties
         Assert.NotNull(project);
@@ -31,7 +31,7 @@ public class ProjectCreationTests
         string taskDescription = "This is a test task";
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
 
         // Check that the project was created and has the correct properties
@@ -52,7 +52,7 @@ public class ProjectCreationTests
         string taskDescription2 = "This is a test task 2";
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription,Duration.Days(10));
         project.AddTask(taskName2, taskDescription2,Duration.Days(10));
 
@@ -75,7 +75,7 @@ public class ProjectCreationTests
         string taskDescription = "This is a test task";
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription,Duration.Days(10));
         Validation<ProjectTask> task = project.GetTaskByName(taskName);
 
@@ -101,7 +101,7 @@ public class ProjectCreationTests
         string taskDescription = "This is a test task";
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, taskDescription,Duration.Days(10));
         var result2 = project.AddTask(taskName, taskDescription,Duration.Days(10));
 
@@ -129,7 +129,7 @@ public class ProjectCreationTests
 
 
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result =  project.AddTask(taskName, taskDescription, taskDuration);
         
         
@@ -157,7 +157,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskDescription2 = "This is a test task 2";
 
-        Project project = Project.Create(name, description);
+        Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, taskDescription, Duration.Days(10));
         var result2 = project.AddTask(taskName2, taskDescription2, Duration.Days(10));
 
@@ -188,7 +188,7 @@ public class ProjectCreationTests
         string description = "This is a test project";
         string taskName = "Test Task";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
         var result2 = project.AddDependency(result1.Value, result1.Value);
 
@@ -206,7 +206,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
         var result2 = project.AddTask(taskName2, "This is a test task", Duration.Days(10));
         var result3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
@@ -229,7 +229,7 @@ public class ProjectCreationTests
         string description = "This is a test project";
         string taskName = "Test Task";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
         var result2 = project.SetTaskStartPoint(result1.Value, Duration.Days(3));
 
@@ -251,7 +251,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, "This is a test task", Duration.Days(10));
         var result2 = project.AddTask(taskName2, "This is a test task", Duration.Days(10));
         var result3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
@@ -274,7 +274,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var result1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
         var result2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
         var result3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
@@ -295,7 +295,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
         var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
         var task3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
@@ -316,7 +316,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
         var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
         project.AddDependency(task2.Value, task1.Value);
@@ -350,7 +350,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
         var task2 = project.AddTask(taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
         var task3 = project.AddTask(taskName3, "This is a test task", Duration.Days(10));
@@ -375,7 +375,7 @@ public class ProjectCreationTests
         string taskName2 = "Test Task 2";
         string taskName3 = "Test Task 3";
 
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         Validation<ProjectTask> task1 = project.AddTask(taskName, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(13))  );
         Validation<ProjectTask> task2 = project.AddTaskAfter(task1.Value, Duration.Days(1),  taskName2, "This is a test task", DurationApproximate.From(Duration.Days(10), Duration.Days(12)) );
         Validation<ProjectTask> task3 = project.AddTaskAfter(task2.Value, Duration.Days(2), taskName3, "This is a test task", Duration.Days(10));

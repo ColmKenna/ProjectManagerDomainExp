@@ -32,6 +32,27 @@ public static class IEnumerableExtensions
 
     public static bool ContainedIn<T>(this T item, params T[] source) => source.Contains(item);
 
+    public static bool ContainsAll<T>(this IEnumerable<T> source, IEnumerable<T> items) => items.All(source.Contains);
+    public static bool ContainsAll<T>(this IEnumerable<T> source, params T[] items) => source.ContainsAll(items.AsEnumerable());  
+
+    public static bool ContainsSameItems<T>(this IEnumerable<T> first, IEnumerable<T> second)
+    {
+        return first.OrderBy(t => t).SequenceEqual(second.OrderBy(t => t));
+    }
     
+    public static bool IsComposedOf<T>(this IEnumerable<T> first, params T[] second)
+    {
+        return first.ContainsSameItems(second.AsEnumerable());
+    }
+    
+    public static bool ContainsSameItemsInOrder<T>(this IEnumerable<T> first, IEnumerable<T> second)
+    {
+        return first.SequenceEqual(second);
+    }
+
+    public static bool IsComposedOfInOrder<T>(this IEnumerable<T> first, params T[] second)
+    {
+        return first.ContainsSameItemsInOrder(second.AsEnumerable());
+    }
     
 }

@@ -1,4 +1,5 @@
 using Measurements;
+using PrimativeExtensions;
 using ProjectManager;
 
 namespace ProjectManagerTests.PricingTests;
@@ -170,4 +171,34 @@ public class BuyNGetCheapestFreeStrategyTests
         Assert.Equal(3, result.ItemsUsedForDiscount.Count());
     }
     
+    [Fact]
+    public void ShouldApplyDiscountIfTheMeasurementTypeIsIntAndQtyIsMultiple()
+    { 
+        var resource = Resource.Create("Test Resource", "Test Resource Description", ResourceProvider.Create("Test Provider", "Test Provider Description"));
+
+        var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
+        buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
+    
+        var  items = Enumerable.Range(1, 1).Select(x => (new  Measurement(3), resource)).ToList();
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
+    
+        Assert.Equal(100m, result.Discount);
+        Assert.Equal(3, result.ItemsUsedForDiscount.Count());
+    }
+    
+    [Fact]
+    public void ShouldApplyDiscountIfItIsAppliesMoreThanOnceAndTheMeasurementTypeIsIntAndQtyIsMultiple()
+    { 
+        var resource = Resource.Create("Test Resource", "Test Resource Description", ResourceProvider.Create("Test Provider", "Test Provider Description"));
+
+        var buyNGetCheapestFreeStrategy = new BuyNGetCheapestFreeStrategy(3, 1);
+        buyNGetCheapestFreeStrategy.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
+    
+        var  items = Enumerable.Range(1, 1).Select(x => (new  Measurement(7), resource)).ToList();
+        var result = buyNGetCheapestFreeStrategy.GetDiscount(items);
+    
+        Assert.Equal(200m, result.Discount);
+        Assert.Equal(6, result.ItemsUsedForDiscount.Count());
+    }
+
 }

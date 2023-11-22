@@ -17,7 +17,7 @@ public class ResourceAssignmentTests
         int resourceQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var result = project.AddResourceToTask(taskName, resource);
@@ -46,7 +46,7 @@ public class ResourceAssignmentTests
         int resourceQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var result = project.AddResourceToTask(taskName, resource);
 
@@ -69,7 +69,7 @@ public class ResourceAssignmentTests
         int resourceQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var result1 = project.AddResourceToTask(taskName, resource);
@@ -105,7 +105,7 @@ public class ResourceAssignmentTests
         int resourceAssignedQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var resourceAssigned =
@@ -142,7 +142,7 @@ public class ResourceAssignmentTests
         int resourceAssignedQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         var resourceAssigned =
             ResourceAssigned.Create(resourceAssignedName, resourceAssignedDescription, resourceAssignedQuantity);
         var result = project.AssignResourceToResourceRequired(taskName, resourceName, resourceAssigned);
@@ -167,7 +167,7 @@ public class ResourceAssignmentTests
         int resourceAssignedQuantity = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
         var resourceAssigned =
             ResourceAssigned.Create(resourceAssignedName, resourceAssignedDescription, resourceAssignedQuantity);
@@ -198,7 +198,7 @@ public class ResourceAssignmentTests
         int resourceQuantity2 = 1;
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName, taskDescription, Duration.Days(10));
         var resource1 = RecourceRequired.Create(resourceName1, resourceDescription1, resourceQuantity1);
         var resource2 = RecourceRequired.Create(resourceName2, resourceDescription2, resourceQuantity2);
@@ -246,7 +246,7 @@ public class ResourceAssignmentTests
         var resourceAssignedQuantity2 = Measurement.Create(measurementType, 3);
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName1, taskDescription1, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var resourceAssigned1 = ResourceAssigned.Create(resourceAssignedName1, resourceAssignedDescription1,
@@ -285,7 +285,7 @@ public class ResourceAssignmentTests
         var resourceAssignedQuantity2 = Volume.CubicFeet(1);
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName1, taskDescription1, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var resourceAssigned1 = ResourceAssigned.Create(resourceAssignedName1, resourceAssignedDescription1,
@@ -343,7 +343,7 @@ public class ResourceAssignmentTests
         var resourceAssignedQuantity2 = Duration.Days(daysToAdd);
 
         // Call the Project.Create() method
-        Project project = Project.Create(name, description);
+                Project project = Project.Create(name, description, ProjectOwner.Create("Test Owner", "Test Owner Description"));
         project.AddTask(taskName1, taskDescription1, Duration.Days(10));
         var resource = RecourceRequired.Create(resourceName, resourceDescription, resourceQuantity);
         var resourceAssigned1 = ResourceAssigned.Create(resourceAssignedName1, resourceAssignedDescription1,

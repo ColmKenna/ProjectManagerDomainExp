@@ -5,7 +5,6 @@ namespace ProjectManager;
 
 
 
-
 public class ResourceProvider
 {
     public int Id { get; private set; }

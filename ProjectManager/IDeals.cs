@@ -6,7 +6,7 @@ namespace ProjectManager;
 
 public interface IDeals
 {
-    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource) > items);
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource) > itemsToCheck);
 }
 
 public class QuantityPricingStrategy 
@@ -121,47 +121,48 @@ public class BuyNGetCheapestFreeStrategy : IDeals
     }
 
 
-    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource)> items)
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource)> itemsToCheck)
     {
-        
+        // create a copy of items
+        var withNumericItemsSplitByAmountToBuy = 
+            GetListWithNumericItemsSplitByAmountToBuy(itemsToCheck).Where(x => quantityPrices.Any(y => y.Resource == x.resource && y.Quantity == x.measurement)).ToList();  
 
         var itemsInQuantityPrices = 
-            items
-                .SelectMany(x => quantityPrices.Where(y => y.Resource == x.resource && y.Quantity  == x.measurement))
+            withNumericItemsSplitByAmountToBuy.Select(x => quantityPrices.First(y => y.Resource == x.resource && y.Quantity == x.measurement))
+                .OrderByDescending(x => x.Cost)
                 .ToList();
 
-        if (itemsInQuantityPrices.Count() < buyN)
-        {
-            return new DiscountResult
-            {
-                Discount = 0,
-                ItemsUsedForDiscount = new List<(Measurement, Resource)>()
-            };
-        }
 
-        // get the largest number divisible by buyN
-        var itemsToUseInDiscount = itemsInQuantityPrices.Count() - (itemsInQuantityPrices.Count() % buyN);
+        decimal totalDiscount = 0;
+        IList<(Measurement Measurement, Resource Resource)> itemsDiscounted = new List<(Measurement Measurement, Resource Resource)>();
+        IList<(Measurement Measurement, Resource Resource)> itemsUsedForDiscount = new List<(Measurement Measurement, Resource Resource)>();
 
-
+        var numberOfItemsToUseForDeal = itemsInQuantityPrices.Count() - (itemsInQuantityPrices.Count() % buyN);
         
-
-        // loop through orderedItems and get the price of every buyN item
-        var totalDiscount = 0m;
-        var itemsUsedForDiscount = items.Take(itemsToUseInDiscount).Select(x => (x.measurement, Resource: x.resource)).ToList();
-        var itemsDiscounted = new List<(Measurement, Resource)>();
-        for (var i = 1; i <=itemsInQuantityPrices.Count(); i++)
+        for (var i = 1; i <= numberOfItemsToUseForDeal; i++)
         {
             if (i % buyN == 0)
             {
                 totalDiscount += itemsInQuantityPrices.ElementAt(i-1).Cost;
                 itemsDiscounted.Add((itemsInQuantityPrices.ElementAt(i-1).Quantity ,itemsInQuantityPrices.ElementAt(i-1).Resource));
             }
+            itemsUsedForDiscount.Add((itemsInQuantityPrices.ElementAt(i-1).Quantity ,itemsInQuantityPrices.ElementAt(i-1).Resource)); 
         }
 
         return new DiscountResult()
         {
-            Discount = totalDiscount, ItemsUsedForDiscount = itemsUsedForDiscount , ItemsDiscounted = itemsDiscounted
+            Discount = totalDiscount, 
+            ItemsUsedForDiscount = itemsUsedForDiscount , 
+            ItemsDiscounted = itemsDiscounted
         };
+   }
+
+    private List<(Measurement measurement, Resource resource)> GetListWithNumericItemsSplitByAmountToBuy(IList<(Measurement measurement, Resource resource)> items)
+    {
+        
+        IDictionary<Resource, int> minimumQtyForBucket = new Dictionary<Resource, int>();
+        minimumQtyForBucket = quantityPrices.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
+        return items.GroupByResourceForType(minimumQtyForBucket).ToList();  
     }
 }
 
@@ -203,8 +204,10 @@ public class MealDealStyleStrategy : IDeals
     public DiscountResult GetDiscount(
         IList<(Measurement, Resource)> items)
     {
+        var itemsToCheck = items.GroupByResourceForType(new Measurement.MeasurementType(1) );
+        
         // Create a dictionary of each meal deal group and the number of items in that group
-        var mealDealGroupsWithCounts = mealDealGroups.ToDictionary(x => x, x => x.GetItemToRemove(items));
+        var mealDealGroupsWithCounts = mealDealGroups.ToDictionary(x => x, x => x.GetItemsToUse(itemsToCheck));
 
         if (mealDealGroupsWithCounts.Any(x => x.Value.Count() < x.Key.NumberToAdd))
         {
@@ -230,20 +233,30 @@ public class MealDealStyleStrategy : IDeals
             ItemsDiscounted = itemsToRemove.Select(x => (x.Quantity, x.Resource)).ToList()
         };
     }
+
+    public IEnumerable<IGrouping<MealDealGroup, ResourceCost>> GroupItemsByMealDealGroup()
+    {
+        var p = 
+         mealDealGroups
+            .SelectMany(mealDealGroup => mealDealGroup.GetItems(), (mealDealGroup, item) => new { MealDealGroup = mealDealGroup, Items = item })
+            .GroupBy(x => x.MealDealGroup, x => x.Items);
+        return p;
+        
+    }
 }
 
 
 public class MealDealGroup
 {
     private List<ResourceCost> resources;
-    private string name;
-    private string description;
+    public string Name { get; }
+    public string Description { get; }
     public int NumberToAdd { get; }
 
     public MealDealGroup(string name, string description, int numberToAdd)
     {
-        this.name = name;
-        this.description = description;
+        this.Name = name;
+        this.Description = description;
         this.NumberToAdd = numberToAdd;
         resources = new List<ResourceCost>();
     }
@@ -268,24 +281,72 @@ public class MealDealGroup
       
     
 
-    public IList<ResourceCost> GetItemToRemove(
+    public IList<ResourceCost> GetItemsToUse(
         IEnumerable<(Measurement Quantity, Resource Resource) > itemsToCheck)
     {
-        var itemsToRemove = new List<ResourceCost>();
-        var itemsInGroup = itemsToCheck.Where(x => ItemIsInGroup(x.Quantity , x.Resource )).ToList();
+        var itemsToUse = new List<ResourceCost>();
+        var minimumQtyForBucket = resources.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
+        var itemsToCheckGrouped = itemsToCheck.GroupByResourceForType(minimumQtyForBucket).ToList();
+        
+        
+        var itemsInGroup = 
+            itemsToCheckGrouped
+                .Where(x => ItemIsInGroup(x.Quantity , x.Resource ))
+                .ToList();
         
         
         
         if (itemsInGroup.Count() < NumberToAdd)
         {
-            return itemsToRemove;
+            return itemsToUse;
         }
-        var itemsInGroupByCost = itemsInGroup.Select(x => this.resources.First(y => y.Resource == x.Resource && y.Quantity == x.Quantity)).ToList();
+        var itemsInGroupByCost =  itemsInGroup.Select(x => this.resources.First(y => y.Resource == x.Resource && y.Quantity == x.Quantity)).ToList();
 
         return
             itemsInGroupByCost
                 .OrderByDescending(x => x.Cost )
                 .Take(NumberToAdd)
                 .ToList();
+    }
+
+    public IList<ResourceCost > GetItems()
+    {
+        return resources ;
+    }
+    
+    // override object.Equals
+    public override bool Equals(object obj)
+    {
+        if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        var other = (MealDealGroup) obj;
+        return this.Name == other.Name && this.Description == other.Description && this.NumberToAdd == other.NumberToAdd;
+    }
+    public override int GetHashCode()
+    {
+        return (Name, Description, NumberToAdd).GetHashCode();
+    }
+    
+    public static bool operator ==(MealDealGroup lhs, MealDealGroup rhs)
+    {
+        if (ReferenceEquals(lhs, rhs))
+        {
+            return true;
+        }
+
+        if (ReferenceEquals(lhs, null) || ReferenceEquals(rhs, null))
+        {
+            return false;
+        }
+
+        return lhs.Equals(rhs);
+    }
+    
+    public static bool operator !=(MealDealGroup lhs, MealDealGroup rhs)
+    {
+        return !(lhs == rhs);
     }
 }

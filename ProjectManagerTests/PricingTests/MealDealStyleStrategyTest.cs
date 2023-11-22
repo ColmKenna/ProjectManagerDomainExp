@@ -1,4 +1,5 @@
 using Measurements;
+using PrimativeExtensions;
 using ProjectManager;
 
 namespace ProjectManagerTests.PricingTests;
@@ -13,7 +14,7 @@ public class MealDealStyleStrategyTest
     private ResourceCost resourceGroup2Cost1, resourceGroup2Cost2, resourceGroup2Cost3, resourceGroup2Cost4;
     private ResourceCost resourceGroup3Cost1, resourceGroup3Cost2, resourceGroup3Cost3, resourceGroup3Cost4;
 
-    private void CreateValidMealDeal()
+    public MealDealStyleStrategyTest()
     {
         group1resource1 = Resource.Create("Test Resource", "Test Resource Description", ResourceProvider.Create("Test Provider", "Test Provider Description"));
         group1resource2 = Resource.Create("Test Resource 2", "Test Resource Description 2", ResourceProvider.Create("Test Provider 2", "Test Provider Description 2"));
@@ -49,7 +50,6 @@ public class MealDealStyleStrategyTest
     [Fact]
     public void CanAddMultipleGroups()
     {
-        CreateValidMealDeal(); // Initialize the resources and costs
 
         var mealDealStyleStrategy = new MealDealStyleStrategy(300m);
         var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, resourceGroup1Cost1, resourceGroup1Cost2, resourceGroup1Cost3, resourceGroup1Cost4);
@@ -84,5 +84,39 @@ public class MealDealStyleStrategyTest
             var item = result.ItemsUsedForDiscount.FirstOrDefault(x => x.Resource == itemToBeDiscounted.resource);
             Assert.Equal(itemToBeDiscounted.measurement, item.Measurement);
         }
+        
+    }
+
+    [Fact]  
+    public void CanGetGroupedListOfProducts()
+    {
+        var mealDealStyleStrategy = new MealDealStyleStrategy(300m);
+        var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, resourceGroup1Cost1, resourceGroup1Cost2, resourceGroup1Cost3, resourceGroup1Cost4);
+        var group2 = mealDealStyleStrategy.AddMealDealGroup("group2", "Second group of items", 1, resourceGroup2Cost1, resourceGroup2Cost2, resourceGroup2Cost3, resourceGroup2Cost4);
+        var group3 = mealDealStyleStrategy.AddMealDealGroup("group3", "Third group of items", 2, resourceGroup3Cost1, resourceGroup3Cost2, resourceGroup3Cost3, resourceGroup3Cost4);
+
+
+        var mealDealGroupedItems = mealDealStyleStrategy.GroupItemsByMealDealGroup();
+        Assert.Equal(3, mealDealGroupedItems.Count());
+        Assert.Contains(mealDealGroupedItems, x => x.Key.Name == "group1");
+        Assert.Contains(mealDealGroupedItems, x => x.Key.Name == "group2");
+        Assert.Contains(mealDealGroupedItems, x => x.Key.Name == "group3");
+        
+        var group1Items = mealDealGroupedItems.FirstOrDefault(x => x.Key.Name == "group1").ToList();
+       Assert.True(group1Items.IsComposedOf(resourceGroup1Cost1, resourceGroup1Cost2, resourceGroup1Cost3, resourceGroup1Cost4));
+       
+       var group2Items = mealDealGroupedItems.FirstOrDefault(x => x.Key.Name == "group2").ToList();
+       Assert.True(group2Items.IsComposedOf(resourceGroup2Cost1, resourceGroup2Cost2, resourceGroup2Cost3, resourceGroup2Cost4));
+       
+       var group3Items = mealDealGroupedItems.FirstOrDefault(x => x.Key.Name == "group3").ToList();
+       Assert.True(group3Items.IsComposedOf(resourceGroup3Cost1, resourceGroup3Cost2, resourceGroup3Cost3, resourceGroup3Cost4));
+       
+       
+           
+        
+        
+        
+        
+
     }
 }

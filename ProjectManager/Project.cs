@@ -3,23 +3,43 @@ using PrimativeExtensions;
 
 namespace ProjectManager;
 
-public class Project
+public class ProjectOwner
 {
-    private Project(string name, string description)
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Description { get; private set; }
+
+    private ProjectOwner(string name, string description)
     {
         Name = name;
         Description = description;
     }
 
-    public static Project Create(string name, string description)
+    public static ProjectOwner Create(string name, string description)
     {
-        return new Project(name, description);
+        return new ProjectOwner(name, description);
+    }
+}
+
+public class Project
+{
+    private Project(string name, string description, ProjectOwner projectOwner)
+    {
+        Name = name;
+        Description = description;
+        ProjectOwner = projectOwner;
+    }
+
+    public static Project Create(string name, string description, ProjectOwner projectOwner)
+    {
+        return new Project(name, description, projectOwner);
     }
 
 
     public int Id { get; private set; }
     public string Name { get; private set; }
     public string Description { get; private set; }
+    public ProjectOwner ProjectOwner { get; private set; }
     public List<ProjectTask> Tasks { get; private set; } = new List<ProjectTask>();
 
     public Validation<ProjectTask> AddTask(string task, string details, DurationApproximate durationApproximate)
@@ -29,7 +49,7 @@ public class Project
             return Validation<ProjectTask>.Fail($"A task with the name '{task}' already exists in this project.");
         }
 
-        var projectTask = ProjectTask.Create(task, details,durationApproximate);
+        var projectTask = ProjectTask.Create(task, details, durationApproximate);
         Tasks.Add(projectTask);
         return projectTask;
     }
@@ -78,6 +98,7 @@ public class Project
         {
             return Validation<ProjectTask>.Fail($"A task with the name '{taskName}' does not exist in this project.");
         }
+
         return Tasks.First(t => t.Name.Equals(taskName, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -86,7 +107,7 @@ public class Project
         return task.AddDependency(projectTask);
     }
 
-    
+
     public Validation<ProjectTask> SetTaskStartPoint(ProjectTask task, DurationApproximate approximateStartPoint)
     {
         return task.SetStartPoint(approximateStartPoint);
@@ -97,23 +118,26 @@ public class Project
     {
         foreach (var projectTask in Tasks)
         {
-            var earliestStartPoint = projectTask.GetEarliestStartPointBasedOnDependancies().ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units ;
-            var earliestinitialStartPoint = projectTask.InitialStartPoint.Minimum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units;
-            var latestinitialStartPoint = projectTask.InitialStartPoint.Maximum.ConvertTo(TimeUnit.Days, new DateTime(2023,1,1)).Units ;
-            if( earliestinitialStartPoint < earliestStartPoint || earliestStartPoint < latestinitialStartPoint)
+            var earliestStartPoint = projectTask.GetEarliestStartPointBasedOnDependancies()
+                .ConvertTo(TimeUnit.Days, new DateTime(2023, 1, 1)).Units;
+            var earliestinitialStartPoint = projectTask.InitialStartPoint.Minimum
+                .ConvertTo(TimeUnit.Days, new DateTime(2023, 1, 1)).Units;
+            var latestinitialStartPoint = projectTask.InitialStartPoint.Maximum
+                .ConvertTo(TimeUnit.Days, new DateTime(2023, 1, 1)).Units;
+            if (earliestinitialStartPoint < earliestStartPoint || earliestStartPoint < latestinitialStartPoint)
             {
                 yield return projectTask;
             }
         }
-        
     }
 
-    public Validation<ProjectTask> AddTaskAfter(ProjectTask precedingTask, Duration days, string newTaskName, string newTaskDescription, DurationApproximate from)
+    public Validation<ProjectTask> AddTaskAfter(ProjectTask precedingTask, Duration days, string newTaskName,
+        string newTaskDescription, DurationApproximate from)
     {
         var task2 = AddTask(newTaskName, newTaskDescription, from);
         return task2.Map(x =>
         {
-            var approximateStartDate  = precedingTask.GetApproximateEndRangeBasedOnDependancies() + days;
+            var approximateStartDate = precedingTask.GetApproximateEndRangeBasedOnDependancies() + days;
             return x.SetStartPoint(approximateStartDate);
         });
     }
