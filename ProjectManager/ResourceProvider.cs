@@ -31,7 +31,7 @@ public class ResourceProvider
     {
         if (resource.ResourceProvider != this)
         {
-            return Validation< ResourceCost>.Fail("Resource Provider does not match");
+            return Validation<ResourceCost>.Fail($"Resource is associated with {Name} as opposed to {resource.ResourceProvider.Name}");
             
         }
         

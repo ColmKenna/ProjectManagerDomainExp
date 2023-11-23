@@ -6,7 +6,7 @@ namespace ProjectManager;
 
 public interface IDeals
 {
-    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource) > itemsToCheck);
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource) > itemsToCheck, Func<(Measurement, Resource), ResourceCost> getResourceCost);
 }
 
 public class QuantityPricingStrategy 
@@ -105,24 +105,30 @@ public class BuyNGetCheapestFreeStrategy : IDeals
 {
     private int buyN;
     private int getCheapestFree;
-    private List<ResourceCost> quantityPrices;
+    private List<(Measurement Quantity, Resource Resource)> eligibleProducts;
 
     public BuyNGetCheapestFreeStrategy(int buyN, int getCheapestFree)
     {
         this.buyN = buyN;
         this.getCheapestFree = getCheapestFree;
-        quantityPrices = new List<ResourceCost>();
+        eligibleProducts = new List<(Measurement, Resource)>();
     }
 
-    public Validation<BuyNGetCheapestFreeStrategy> AddPrice(ResourceCost resourceCost)
+    public Validation<BuyNGetCheapestFreeStrategy> AddPrice((Measurement, Resource) resourceCost)
     {
-        quantityPrices.Add(resourceCost);
+        eligibleProducts.Add(resourceCost);
         return this;
     }
 
-
-    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource)> itemsToCheck)
+    public Validation<BuyNGetCheapestFreeStrategy> AddPrice(Measurement measurement, Resource resource)
     {
+        return AddPrice((measurement, resource));
+    }
+
+
+    public DiscountResult GetDiscount(IList<(Measurement measurement, Resource resource)> itemsToCheck, Func<(Measurement, Resource), ResourceCost> getResourceCost)
+    {
+        var quantityPrices = eligibleProducts.Select(x => getResourceCost(x)).ToList();
         // create a copy of items
         var withNumericItemsSplitByAmountToBuy = 
             GetListWithNumericItemsSplitByAmountToBuy(itemsToCheck).Where(x => quantityPrices.Any(y => y.Resource == x.resource && y.Quantity == x.measurement)).ToList();  
@@ -161,7 +167,7 @@ public class BuyNGetCheapestFreeStrategy : IDeals
     {
         
         IDictionary<Resource, int> minimumQtyForBucket = new Dictionary<Resource, int>();
-        minimumQtyForBucket = quantityPrices.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
+        minimumQtyForBucket = eligibleProducts.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
         return items.GroupByResourceForType(minimumQtyForBucket).ToList();  
     }
 }
@@ -185,7 +191,8 @@ public class MealDealStyleStrategy : IDeals
 
 
 
-    public Validation<MealDealStyleStrategy> AddMealDealGroup(string name, string description, int numberToAdd,params ResourceCost[] items) 
+    public Validation<MealDealStyleStrategy> AddMealDealGroup(string name, string description, int numberToAdd,params (
+        Measurement, Resource )[] items) 
     {
         var mealDealGroup = new MealDealGroup(name, description, numberToAdd);
         foreach (var mealDealItem in items)
@@ -202,12 +209,12 @@ public class MealDealStyleStrategy : IDeals
     }
 
     public DiscountResult GetDiscount(
-        IList<(Measurement, Resource)> items)
+        IList<(Measurement, Resource)> items, Func<(Measurement, Resource), ResourceCost> getResourceCost)
     {
         var itemsToCheck = items.GroupByResourceForType(new Measurement.MeasurementType(1) );
         
         // Create a dictionary of each meal deal group and the number of items in that group
-        var mealDealGroupsWithCounts = mealDealGroups.ToDictionary(x => x, x => x.GetItemsToUse(itemsToCheck));
+        var mealDealGroupsWithCounts = mealDealGroups.ToDictionary(x => x, x => x.GetItemsToUse(itemsToCheck,getResourceCost));
 
         if (mealDealGroupsWithCounts.Any(x => x.Value.Count() < x.Key.NumberToAdd))
         {
@@ -234,21 +241,20 @@ public class MealDealStyleStrategy : IDeals
         };
     }
 
-    public IEnumerable<IGrouping<MealDealGroup, ResourceCost>> GroupItemsByMealDealGroup()
+    public IEnumerable<IGrouping<MealDealGroup, (Measurement Quantity, Resource Resource)>> GroupItemsByMealDealGroup()
     {
         var p = 
          mealDealGroups
             .SelectMany(mealDealGroup => mealDealGroup.GetItems(), (mealDealGroup, item) => new { MealDealGroup = mealDealGroup, Items = item })
             .GroupBy(x => x.MealDealGroup, x => x.Items);
         return p;
-        
     }
 }
 
 
 public class MealDealGroup
 {
-    private List<ResourceCost> resources;
+    private List<(Measurement, Resource)> products;
     public string Name { get; }
     public string Description { get; }
     public int NumberToAdd { get; }
@@ -258,34 +264,36 @@ public class MealDealGroup
         this.Name = name;
         this.Description = description;
         this.NumberToAdd = numberToAdd;
-        resources = new List<ResourceCost>();
+        products = new List<(Measurement, Resource)>();
     }
 
-    public Validation<MealDealGroup> AddResource(Measurement quantity, Resource resource, decimal cost)
+    public Validation<MealDealGroup> AddResource(Measurement quantity, Resource resource)
     {
-        resources.Add(ResourceCost.CreateInstance(quantity, resource, cost));
+        products.Add((quantity, resource));
         return this;
     }
 
-    public Validation<MealDealGroup> AddResource(ResourceCost resourceCost)
+    public Validation<MealDealGroup> AddResource((Measurement quantity, Resource resource) resource)
     {
-        resources.Add(resourceCost);
+        products.Add( resource);
         return this;
     }
+
 
     private bool ItemIsInGroup(Measurement quantity, Resource resource)
     {
-        return resources.Any(x => x.Resource == resource && x.Quantity == quantity);
+        return products.Any(x => x.Item2 == resource && x.Item1 == quantity);
     }
     
       
     
 
     public IList<ResourceCost> GetItemsToUse(
-        IEnumerable<(Measurement Quantity, Resource Resource) > itemsToCheck)
+        IEnumerable<(Measurement Quantity, Resource Resource) > itemsToCheck, Func<(Measurement, Resource), ResourceCost> getResourceCost)
     {
+        var productsWithPrices = this.products.Select(x => getResourceCost((x.Item1, x.Item2))).ToList();
         var itemsToUse = new List<ResourceCost>();
-        var minimumQtyForBucket = resources.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
+        var minimumQtyForBucket = productsWithPrices.Where(x => x.Quantity.IsInt()) .ToDictionary(x => x.Resource, x => x.Quantity.GetQty().ToInt());
         var itemsToCheckGrouped = itemsToCheck.GroupByResourceForType(minimumQtyForBucket).ToList();
         
         
@@ -300,7 +308,7 @@ public class MealDealGroup
         {
             return itemsToUse;
         }
-        var itemsInGroupByCost =  itemsInGroup.Select(x => this.resources.First(y => y.Resource == x.Resource && y.Quantity == x.Quantity)).ToList();
+        var itemsInGroupByCost =  itemsInGroup.Select(x => productsWithPrices.First(y => y.Resource == x.Resource && y.Quantity == x.Quantity)).ToList();
 
         return
             itemsInGroupByCost
@@ -309,9 +317,9 @@ public class MealDealGroup
                 .ToList();
     }
 
-    public IList<ResourceCost > GetItems()
+    public IList<(Measurement Quantity, Resource Resource) > GetItems()
     {
-        return resources ;
+        return products ;
     }
     
     // override object.Equals

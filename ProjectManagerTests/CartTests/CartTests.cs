@@ -48,6 +48,7 @@ public class CartTests
         resourceGroup3Cost4 = ResourceCost.CreateInstance(1, group3resource4, 190m);
     }
     
+
     [Fact]
     public void CanCreateCart()
     {
@@ -74,6 +75,7 @@ public class CartTests
         Assert.Equal(resource, cart.Items.First().resource);
     }
 
+
     [Fact]
     public void CanAddMultipleItemsToCart()
     {
@@ -95,7 +97,7 @@ public class CartTests
         Assert.Equal(resource2, cart.Items.Last().resource);
     }
 
-    // calculate total return total of all items in cart
+
     [Fact]
     public void CalculateTotalReturnTotalOfAllItemsInCart()
     {
@@ -150,8 +152,11 @@ public class CartTests
 
         var buy3Get1Free = new BuyNGetCheapestFreeStrategy(3, 1);
 
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource2, 200m));
+        // buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
+        // buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource2, 200m));
+        buy3Get1Free.AddPrice(1, resource);
+        buy3Get1Free.AddPrice(1, resource2);
+
 
 
         dealsRepository.Arrange(x => x.GetDealsByResourceProvider(projectOwner, Arg.IsAny<DateTime>())).Returns(
@@ -206,8 +211,8 @@ public class CartTests
 
         var buy3Get1Free = new BuyNGetCheapestFreeStrategy(3, 1);
 
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource2, 200m));
+        buy3Get1Free.AddPrice(1, resource);
+        buy3Get1Free.AddPrice(1, resource2);
 
 
         dealsRepository.Arrange(x => x.GetDealsByResourceProvider(projectOwner, Arg.IsAny<DateTime>())).Returns(
@@ -254,9 +259,9 @@ public class CartTests
     public void AppliesWhenMultipleDifferentDealApplicipable()
     {
         var mealDealStyleStrategy = new MealDealStyleStrategy(300m);
-        var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, resourceGroup1Cost1, resourceGroup1Cost2, resourceGroup1Cost3, resourceGroup1Cost4);
-        var group2 = mealDealStyleStrategy.AddMealDealGroup("group2", "Second group of items", 1, resourceGroup2Cost1, resourceGroup2Cost2, resourceGroup2Cost3, resourceGroup2Cost4);
-        var group3 = mealDealStyleStrategy.AddMealDealGroup("group3", "Third group of items", 2, resourceGroup3Cost1, resourceGroup3Cost2, resourceGroup3Cost3, resourceGroup3Cost4);
+var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, (resourceGroup1Cost1.Quantity, resourceGroup1Cost1.Resource), (resourceGroup1Cost2.Quantity, resourceGroup1Cost2.Resource), (resourceGroup1Cost3.Quantity, resourceGroup1Cost3.Resource), (resourceGroup1Cost4.Quantity, resourceGroup1Cost4.Resource));
+var group2 = mealDealStyleStrategy.AddMealDealGroup("group2", "Second group of items", 1, (resourceGroup2Cost1.Quantity, resourceGroup2Cost1.Resource), (resourceGroup2Cost2.Quantity, resourceGroup2Cost2.Resource), (resourceGroup2Cost3.Quantity, resourceGroup2Cost3.Resource), (resourceGroup2Cost4.Quantity, resourceGroup2Cost4.Resource));
+var group3 = mealDealStyleStrategy.AddMealDealGroup("group3", "Third group of items", 2, (resourceGroup3Cost1.Quantity, resourceGroup3Cost1.Resource), (resourceGroup3Cost2.Quantity, resourceGroup3Cost2.Resource), (resourceGroup3Cost3.Quantity, resourceGroup3Cost3.Resource), (resourceGroup3Cost4.Quantity, resourceGroup3Cost4.Resource));
 
         var projectOwner = ProjectOwner.Create("Test Project Owner", "Test Project Owner Description");
         var dealsRepository = Mock.Create<IDealsRepository>();
@@ -266,8 +271,8 @@ public class CartTests
 
         var buy3Get1Free = new BuyNGetCheapestFreeStrategy(3, 1);
 
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource, 100m));
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource2, 200m));
+        buy3Get1Free.AddPrice(1, resource);
+        buy3Get1Free.AddPrice(1, resource2);
 
         dealsRepository.Arrange(x => x.GetDealsByResourceProvider(projectOwner, Arg.IsAny<DateTime>())).Returns(
             new List<IDeals>()
@@ -306,9 +311,9 @@ public class CartTests
     public void ItemCantbeUsedForTwiceInDeals()
     {
         var mealDealStyleStrategy = new MealDealStyleStrategy(300m);
-        var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, resourceGroup1Cost1, resourceGroup1Cost2, resourceGroup1Cost3, resourceGroup1Cost4);
-        var group2 = mealDealStyleStrategy.AddMealDealGroup("group2", "Second group of items", 1, resourceGroup2Cost1, resourceGroup2Cost2, resourceGroup2Cost3, resourceGroup2Cost4);
-        var group3 = mealDealStyleStrategy.AddMealDealGroup("group3", "Third group of items", 2, resourceGroup3Cost1, resourceGroup3Cost2, resourceGroup3Cost3, resourceGroup3Cost4);
+var group1 = mealDealStyleStrategy.AddMealDealGroup("group1", "First group of items", 2, (resourceGroup1Cost1.Quantity, resourceGroup1Cost1.Resource), (resourceGroup1Cost2.Quantity, resourceGroup1Cost2.Resource), (resourceGroup1Cost3.Quantity, resourceGroup1Cost3.Resource), (resourceGroup1Cost4.Quantity, resourceGroup1Cost4.Resource));
+var group2 = mealDealStyleStrategy.AddMealDealGroup("group2", "Second group of items", 1, (resourceGroup2Cost1.Quantity, resourceGroup2Cost1.Resource), (resourceGroup2Cost2.Quantity, resourceGroup2Cost2.Resource), (resourceGroup2Cost3.Quantity, resourceGroup2Cost3.Resource), (resourceGroup2Cost4.Quantity, resourceGroup2Cost4.Resource));
+var group3 = mealDealStyleStrategy.AddMealDealGroup("group3", "Third group of items", 2, (resourceGroup3Cost1.Quantity, resourceGroup3Cost1.Resource), (resourceGroup3Cost2.Quantity, resourceGroup3Cost2.Resource), (resourceGroup3Cost3.Quantity, resourceGroup3Cost3.Resource), (resourceGroup3Cost4.Quantity, resourceGroup3Cost4.Resource));
 
         var projectOwner = ProjectOwner.Create("Test Project Owner", "Test Project Owner Description");
         var dealsRepository = Mock.Create<IDealsRepository>();
@@ -318,8 +323,9 @@ public class CartTests
 
         var buy3Get1Free = new BuyNGetCheapestFreeStrategy(3, 1);
 
-        buy3Get1Free.AddPrice(resourceGroup1Cost1);
-        buy3Get1Free.AddPrice(ResourceCost.CreateInstance(1, resource2, 200m));
+        buy3Get1Free.AddPrice(resourceGroup1Cost1.Quantity , resourceGroup1Cost1.Resource);
+        buy3Get1Free.AddPrice(1, resource2);
+        
 
         dealsRepository.Arrange(x => x.GetDealsByResourceProvider(projectOwner, Arg.IsAny<DateTime>())).Returns(
             new List<IDeals>()

@@ -39,6 +39,11 @@ public class Cart
 
 
         var resourceCosts = resourceRepository.GetResourceCosts();
+        Func<(Measurement measurement, Resource resource), ResourceCost> getResourceCost = x =>
+        {
+            return resourceCosts.First(y => y.Resource == x.resource);
+        };
+        
         Validation<decimal> total = 0m;
         foreach (var item in Items)
         {
@@ -63,7 +68,7 @@ public class Cart
         var itemsToCheck = Items.GroupByResource().ToList();
         foreach (var deal in deals)
         {
-            var discount = deal.GetDiscount(itemsToCheck);
+            var discount = deal.GetDiscount(itemsToCheck, getResourceCost);
             cartTotal.AddDiscount(discount);
             foreach (var usedForDiscount in discount.ItemsUsedForDiscount)
             {
